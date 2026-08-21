@@ -26,22 +26,23 @@ h1,h2,h3{font-family:var(--font-display); font-weight:600; text-wrap:balance; ma
 button{font-family:inherit;}
 a{color:inherit;}
 
-.shell{display:flex; min-height:100vh;}
-.rail{ width:228px; flex:0 0 228px; background:var(--ink); color:#EDEDE6; display:flex; flex-direction:column; padding:20px 12px; gap:8px; position:sticky; top:0; height:100vh; }
-.brand{padding:2px 8px 18px; }
-.brand .sub{font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:#fff; font-weight:400; margin-top:3px; text-align:center;}
-.brand .logo-box{background:#fff; border-radius:8px; padding:9px 12px; display:inline-block;}
-.brand .logo-img{display:block; width:100%; max-width:150px; height:auto;}
-.navbtn{ display:flex; align-items:center; gap:10px; text-align:left; width:100%; background:#C9CBCD; border:0; color:var(--accent-ink); font-weight:600; padding:10px 12px; border-radius:8px; font-size:13.5px; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.15); transition:background .12s ease, color .12s ease, transform .12s ease; }
-.navbtn:hover{background:#fff; color:var(--accent-ink); transform:translateX(1px);}
+.shell{display:flex; flex-direction:column; min-height:100vh;}
+.rail{ width:100%; background:var(--ink); color:#EDEDE6; display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; padding:10px 16px; gap:8px; position:sticky; top:0; z-index:6; }
+.brand{padding:0; display:flex; align-items:center; gap:10px; margin-right:10px;}
+.brand .sub{font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:#fff; font-weight:400; text-align:left; white-space:nowrap;}
+.brand .logo-box{background:#fff; border-radius:7px; padding:6px 10px; display:inline-flex; align-items:center;}
+.brand .logo-img{display:block; width:auto; height:28px; max-width:none;}
+.navbtn{ display:flex; align-items:center; gap:8px; text-align:left; width:auto; background:#C9CBCD; border:0; color:var(--accent-ink); font-weight:600; padding:9px 13px; border-radius:8px; font-size:13px; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.15); transition:background .12s ease, color .12s ease, transform .12s ease; white-space:nowrap; }
+.navbtn:hover{background:#fff; color:var(--accent-ink); transform:translateY(-1px);}
 .navbtn.navbtn-white{background:#fff; color:var(--accent);}
 .navbtn.active{background:var(--accent-ink); color:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3);}
 .navbtn.active:hover{background:var(--accent-ink); color:#fff;}
-.navbtn .ic{width:18px; text-align:center; font-family:var(--font-mono); font-size:12px; opacity:.9;}
-.rail-foot{margin-top:auto; padding:10px 8px; font-size:20px; color:#fff; font-weight:400; border-top:1px solid rgba(255,255,255,.25); padding-top:14px; font-family:var(--font-display); letter-spacing:.03em; text-align:center;}
+.navbtn .ic{width:16px; text-align:center; font-family:var(--font-mono); font-size:12px; opacity:.9;}
+.navbtn.adminbtn{margin-left:auto;}
+.rail-foot{padding:0 4px 0 14px; font-size:15px; color:#fff; font-weight:400; border-left:1px solid rgba(255,255,255,.25); font-family:var(--font-display); letter-spacing:.03em; white-space:nowrap;}
 
 .main{flex:1; min-width:0; display:flex; flex-direction:column;}
-.topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 28px; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:5; }
+.topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 28px; border-bottom:1px solid var(--border); background:var(--surface); }
 .topbar h1{font-size:20px;}
 .topbar .meta{font-size:12px; color:var(--text-muted);}
 .content{padding:26px 28px 60px; max-width:1180px; width:100%; margin:0 auto;}
@@ -152,9 +153,8 @@ tbody tr:hover{background:var(--surface-2);}
 
 @media (max-width:1180px) and (min-width:861px){ .content{padding:20px 16px 60px; max-width:100%;} }
 @media (max-width:860px){
-  .rail{position:fixed; left:-260px; z-index:40; transition:left .18s ease; box-shadow:var(--shadow);}
-  .rail.open{left:0;}
-  #railToggle{display:inline-flex !important;}
+  .rail{padding:10px 12px;}
+  .brand .sub{display:none;}
   .grid-kpi{grid-template-columns:1fr 1fr;}
   .row2,.row3{grid-template-columns:1fr;}
   .lookup-grid{grid-template-columns:1fr 1fr; grid-template-areas:"a b" "c c";}
@@ -178,14 +178,13 @@ tbody tr:hover{background:var(--surface-2);}
     <button class="navbtn" data-view="directorio"><span class="ic">⚇</span> Directorio</button>
     <button class="navbtn" data-view="reporte"><span class="ic">▤</span> Reporte</button>
     <button class="navbtn" data-view="datos" id="navDatos"><span class="ic">⇅</span> Datos y respaldo</button>
-    <button class="navbtn navbtn-white adminbtn" id="btnAdminToggle" style="margin-top:auto;"><span class="ic">🔒</span> <span id="adminToggleLabel">Modo administrador</span></button>
+    <button class="navbtn navbtn-white adminbtn" id="btnAdminToggle"><span class="ic">🔒</span> <span id="adminToggleLabel">Modo administrador</span></button>
     <div class="rail-foot">App Vehículos</div>
   </nav>
 
   <div class="main">
     <div class="topbar">
       <div style="display:flex; align-items:center; gap:10px;">
-        <button class="btn btn-ghost btn-sm" id="railToggle" style="display:none;">☰</button>
         <h1 id="viewTitle">Panel estadístico</h1>
       </div>
       <div style="display:flex; align-items:center; gap:14px;">
@@ -1063,11 +1062,9 @@ function go(view){
   document.querySelectorAll('.navbtn[data-view]').forEach(function(b){ b.classList.toggle('active', b.dataset.view===view); });
   document.getElementById('viewTitle').textContent = VIEWS[view].title;
   document.getElementById('topActions').innerHTML = '';
-  document.getElementById('rail').classList.remove('open');
   VIEWS[view].render();
 }
 document.querySelectorAll('.navbtn[data-view]').forEach(function(b){ b.addEventListener('click', function(){ go(b.dataset.view); }); });
-document.getElementById('railToggle').addEventListener('click', function(){ document.getElementById('rail').classList.toggle('open'); });
 document.getElementById('btnAdminToggle').addEventListener('click', function(){
   if(isAdmin()){
     setAdmin(false); applyAdminVisibility();
