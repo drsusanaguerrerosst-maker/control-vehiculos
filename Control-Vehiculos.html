@@ -1,0 +1,1940 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Control de Vehículos No Motorizados</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+:root{
+  --ink:#AD0538; --ink-2:#8A032C;
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F5F5F5; --field-bg:#DCDDDF;
+  --border:#CACBCD; --text:#24272B; --text-muted:#5B6169;
+  --accent:#AD0538; --accent-ink:#7A0227; --accent-bg:#F7E1E7;
+  --good:#3F7D58; --good-bg:#E4EFE7;
+  --warn:#B8862E; --warn-bg:#F5EAD3;
+  --danger:#B23A3A; --danger-bg:#F5E0DE;
+  --shadow: 0 1px 2px rgba(27,43,58,.06), 0 4px 14px rgba(27,43,58,.06);
+  --radius: 10px;
+  --font-display: "Iowan Old Style","Palatino Linotype",Georgia,"Times New Roman",serif;
+  --font-ui: "Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --font-mono: ui-monospace,"Cascadia Mono","SFMono-Regular",Consolas,Menlo,monospace;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--bg); color:var(--text); font-family:var(--font-ui); font-size:14.5px; line-height:1.45; -webkit-font-smoothing:antialiased; }
+h1,h2,h3{font-family:var(--font-display); font-weight:600; text-wrap:balance; margin:0;}
+.tabular{font-variant-numeric:tabular-nums; font-family:var(--font-mono);}
+button{font-family:inherit;}
+a{color:inherit;}
+
+.shell{display:flex; min-height:100vh;}
+.rail{ width:228px; flex:0 0 228px; background:var(--ink); color:#EDEDE6; display:flex; flex-direction:column; padding:20px 12px; gap:8px; position:sticky; top:0; height:100vh; }
+.brand{padding:2px 8px 18px; }
+.brand .sub{font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:#fff; font-weight:400; margin-top:3px; text-align:center;}
+.brand .logo-box{background:#fff; border-radius:8px; padding:9px 12px; display:inline-block;}
+.brand .logo-img{display:block; width:100%; max-width:150px; height:auto;}
+.navbtn{ display:flex; align-items:center; gap:10px; text-align:left; width:100%; background:#fff; border:0; color:var(--accent); font-weight:600; padding:10px 12px; border-radius:8px; font-size:13.5px; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.15); transition:background .12s ease, color .12s ease, transform .12s ease; }
+.navbtn:hover{background:#fff; color:var(--accent-ink); transform:translateX(1px);}
+.navbtn.active{background:var(--accent-ink); color:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.navbtn.active:hover{background:var(--accent-ink); color:#fff;}
+.navbtn .ic{width:18px; text-align:center; font-family:var(--font-mono); font-size:12px; opacity:.9;}
+.rail-foot{margin-top:auto; padding:10px 8px; font-size:20px; color:#fff; font-weight:400; border-top:1px solid rgba(255,255,255,.25); padding-top:14px; font-family:var(--font-display); letter-spacing:.03em; text-align:center;}
+
+.main{flex:1; min-width:0; display:flex; flex-direction:column;}
+.topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 28px; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:5; }
+.topbar h1{font-size:20px;}
+.topbar .meta{font-size:12px; color:var(--text-muted);}
+.content{padding:26px 28px 60px; max-width:1180px; width:100%; margin:0 auto;}
+
+.btn{ display:inline-flex; align-items:center; gap:6px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); padding:8px 14px; font-size:13.5px; cursor:pointer; transition:border-color .12s ease, background .12s ease; }
+.btn:hover{border-color:var(--accent);}
+.btn:focus-visible, .navbtn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.btn-primary{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600;}
+.btn-primary:hover{filter:brightness(1.06);}
+.btn-ghost{border-color:transparent; background:transparent;}
+.btn-sm{padding:5px 10px; font-size:12.5px; border-radius:6px;}
+.btn:disabled{opacity:.45; cursor:not-allowed;}
+
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);}
+.grid-kpi{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:22px;}
+.kpi{padding:9px 11px;}
+.card.kpi, .card-muted{background:var(--field-bg);}
+.kpi .label{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted);}
+.kpi .value{font-family:var(--font-display); font-size:19px; margin-top:3px;}
+.kpi .foot{font-size:10.5px; color:var(--text-muted); margin-top:2px;}
+
+.pill{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:99px; font-size:11.5px; font-weight:600; letter-spacing:.02em;}
+.pill::before{content:""; width:6px; height:6px; border-radius:99px; background:currentColor;}
+.pill-ok{background:var(--good-bg); color:var(--good);}
+.pill-warn{background:var(--warn-bg); color:var(--warn);}
+.pill-danger{background:var(--danger-bg); color:var(--danger);}
+.pill-muted{background:var(--surface-2); color:var(--text-muted);}
+
+.code{font-family:var(--font-mono); font-size:12px; background:var(--surface-2); border:1px solid var(--border); border-radius:5px; padding:2px 6px; white-space:nowrap;}
+
+label{display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px;}
+input[type=text],input[type=date],input[type=time],input[type=search],input[type=tel],input[type=email],select,textarea{
+  width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:7px; background:var(--field-bg); color:var(--text); font-size:13.5px; font-family:inherit;
+}
+.field{margin-bottom:13px;}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;}
+
+table{width:100%; border-collapse:collapse; font-size:12.5px;}
+th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); padding:8px 9px; border-bottom:1px solid var(--border); white-space:nowrap;}
+td{padding:8px 9px; border-bottom:1px solid var(--border); vertical-align:middle;}
+tbody tr:hover{background:var(--surface-2);}
+.tablewrap{overflow-x:auto; border-radius:var(--radius); border:1px solid var(--border);}
+.tablewrap table{min-width:680px;}
+
+.empty{padding:48px 24px; text-align:center; color:var(--text-muted);}
+.empty h3{color:var(--text); font-size:18px; margin-bottom:6px;}
+
+.section-head{display:flex; align-items:baseline; justify-content:space-between; margin:28px 0 12px; flex-wrap:wrap; gap:8px;}
+.section-head:first-child{margin-top:0;}
+.section-head h2{font-size:16px;}
+.section-head .hint{font-size:12px; color:var(--text-muted);}
+
+.toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px;}
+.toolbar input,.toolbar select{width:auto;}
+.toolbar .search{flex:1; min-width:180px;}
+
+.overlay{position:fixed; inset:0; background:rgba(15,20,25,.5); display:flex; align-items:flex-start; justify-content:center; padding:5vh 16px; overflow-y:auto; z-index:50;}
+.modal{background:var(--surface); border-radius:12px; border:1px solid var(--border); box-shadow:var(--shadow); width:100%; max-width:560px; padding:22px 24px;}
+.modal h3{font-size:17px; margin-bottom:14px;}
+.modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:18px;}
+
+.chip-list{display:flex; flex-wrap:wrap; gap:8px;}
+.chip{background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:8px 12px; font-size:12.5px;}
+.chip b{display:block; font-family:var(--font-display); font-size:15px;}
+.chip-click{cursor:pointer; transition:border-color .12s ease, background .12s ease;}
+.chip-click:hover{border-color:var(--accent);}
+.chip-selected{background:var(--accent-bg); border-color:var(--accent);}
+
+.bars{display:flex; align-items:flex-end; gap:5px; height:104px; padding-top:16px;}
+.bars .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;}
+.bars .b{width:100%; background:var(--accent); border-radius:3px 3px 0 0; min-height:2px; opacity:.85;}
+.bars .lbl{font-size:9.5px; color:var(--text-muted); white-space:nowrap;}
+.bars .cnt{font-size:10.5px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; font-family:var(--font-mono); line-height:1;}
+.bars .cnt.zero{color:var(--text-muted); font-weight:400; opacity:.5;}
+
+.seg{display:inline-flex; border:1px solid var(--border); border-radius:9px; overflow:hidden; margin-bottom:14px;}
+.seg-btn{border:0; background:var(--surface); color:var(--text-muted); padding:8px 18px; font-size:13.5px; cursor:pointer; font-weight:600;}
+.seg-btn:not(:last-child){border-right:1px solid var(--border);}
+.seg-btn.active{background:var(--accent); color:#fff;}
+
+.helpbar{font-size:12px; color:var(--text-muted); background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 12px; margin-bottom:16px;}
+.banner{font-size:12.5px; padding:9px 14px; border-radius:8px; margin-bottom:16px; background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger-bg);}
+.banner.ok{background:var(--good-bg); color:var(--good); border-color:var(--good-bg);}
+.banner.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn-bg);}
+
+.toast-wrap{position:fixed; top:16px; right:16px; z-index:200; display:flex; flex-direction:column; gap:8px; max-width:340px;}
+.toast{background:var(--warn-bg); color:var(--warn); border:1px solid var(--warn); border-radius:8px; padding:11px 14px; font-size:12.5px; box-shadow:var(--shadow); animation:toastIn .15s ease;}
+.toast.toast-danger{background:var(--danger-bg); color:var(--danger); border-color:var(--danger);}
+@keyframes toastIn{from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);}}
+
+.clock{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:13px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:8px 12px; display:inline-block;}
+
+.photo-box{background:var(--field-bg); border:1px dashed var(--border); border-radius:10px; overflow:hidden; display:flex; align-items:center; justify-content:center; aspect-ratio:1/1;}
+.photo-box img{width:100%; height:100%; object-fit:cover; display:block;}
+.photo-box .ph{color:var(--text-muted); font-size:12px; text-align:center; padding:10px;}
+.lookup-grid{display:grid; grid-template-columns:120px 120px 1fr; gap:16px; align-items:start;}
+
+.credencial{ display:flex; flex-direction:column; align-items:center; text-align:center; padding:28px 26px 24px; }
+.credencial .banda{ height:8px; width:100%; background:var(--accent); border-radius:8px 8px 0 0; margin:-22px -24px 22px; }
+.credencial .foto{ width:112px; height:112px; border-radius:50%; overflow:hidden; border:3px solid var(--accent-bg); background:var(--field-bg); display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+.credencial .foto img{ width:100%; height:100%; object-fit:cover; display:block; }
+.credencial .foto .ph{ font-size:11px; color:var(--text-muted); padding:6px; }
+.credencial .nombre{ font-family:var(--font-display); font-size:20px; margin-bottom:4px; }
+.credencial .doc{ font-family:var(--font-mono); font-size:13px; color:var(--text-muted); margin-bottom:14px; }
+.credencial .datos{ display:flex; flex-direction:column; gap:4px; margin-bottom:20px; font-size:12.5px; color:var(--text-muted); }
+.credencial .qrbox{ display:inline-block; padding:12px; background:#fff; border:1px solid var(--border); border-radius:10px; margin-bottom:6px; }
+
+@media (max-width:1180px) and (min-width:861px){ .content{padding:20px 16px 60px; max-width:100%;} }
+@media (max-width:860px){
+  .rail{position:fixed; left:-260px; z-index:40; transition:left .18s ease; box-shadow:var(--shadow);}
+  .rail.open{left:0;}
+  #railToggle{display:inline-flex !important;}
+  .grid-kpi{grid-template-columns:1fr 1fr;}
+  .row2,.row3{grid-template-columns:1fr;}
+  .lookup-grid{grid-template-columns:1fr 1fr; grid-template-areas:"a b" "c c";}
+  .content{padding:18px;}
+  .topbar{padding:12px 16px;}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important;} }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="rail" id="rail">
+    <div class="brand">
+      <div class="logo-box"><img class="logo-img" src="data:image/jpeg;base64,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" alt="CeresCOS" /></div>
+      <div class="sub">Control de vehículos no motorizados</div>
+    </div>
+    <button class="navbtn" data-view="dashboard"><span class="ic">◧</span> Panel estadístico</button>
+    <button class="navbtn" data-view="registrar"><span class="ic">✎</span> Registrar vehículo</button>
+    <button class="navbtn" data-view="movimientos"><span class="ic">≣</span> Bitácora de movimientos</button>
+    <button class="navbtn" data-view="directorio"><span class="ic">⚇</span> Directorio</button>
+    <button class="navbtn" data-view="reporte"><span class="ic">▤</span> Reporte</button>
+    <button class="navbtn" data-view="datos" id="navDatos"><span class="ic">⇅</span> Datos y respaldo</button>
+    <button class="navbtn adminbtn" id="btnAdminToggle" style="margin-top:auto;"><span class="ic">🔒</span> <span id="adminToggleLabel">Modo administrador</span></button>
+    <div class="rail-foot">App Vehículos</div>
+  </nav>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button class="btn btn-ghost btn-sm" id="railToggle" style="display:none;">☰</button>
+        <h1 id="viewTitle">Panel estadístico</h1>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div id="topActions"></div>
+        <div class="meta" id="topMeta"></div>
+      </div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+
+<script>
+/* ====== QRCode generator library (davidshimjs/qrcodejs, MIT) ====== */
+/**
+ * @fileoverview
+ * - Using the 'QRCode for Javascript library'
+ * - Fixed dataset of 'QRCode for Javascript library' for support full-spec.
+ * - this library has no dependencies.
+ * 
+ * @author davidshimjs
+ * @see <a href="http://www.d-project.com/" target="_blank">http://www.d-project.com/</a>
+ * @see <a href="http://jeromeetienne.github.com/jquery-qrcode/" target="_blank">http://jeromeetienne.github.com/jquery-qrcode/</a>
+ */
+var QRCode;
+
+(function () {
+	//---------------------------------------------------------------------
+	// QRCode for JavaScript
+	//
+	// Copyright (c) 2009 Kazuhiko Arase
+	//
+	// URL: http://www.d-project.com/
+	//
+	// Licensed under the MIT license:
+	//   http://www.opensource.org/licenses/mit-license.php
+	//
+	// The word "QR Code" is registered trademark of 
+	// DENSO WAVE INCORPORATED
+	//   http://www.denso-wave.com/qrcode/faqpatent-e.html
+	//
+	//---------------------------------------------------------------------
+	function QR8bitByte(data) {
+		this.mode = QRMode.MODE_8BIT_BYTE;
+		this.data = data;
+		this.parsedData = [];
+
+		// Added to support UTF-8 Characters
+		for (var i = 0, l = this.data.length; i < l; i++) {
+			var byteArray = [];
+			var code = this.data.charCodeAt(i);
+
+			if (code > 0x10000) {
+				byteArray[0] = 0xF0 | ((code & 0x1C0000) >>> 18);
+				byteArray[1] = 0x80 | ((code & 0x3F000) >>> 12);
+				byteArray[2] = 0x80 | ((code & 0xFC0) >>> 6);
+				byteArray[3] = 0x80 | (code & 0x3F);
+			} else if (code > 0x800) {
+				byteArray[0] = 0xE0 | ((code & 0xF000) >>> 12);
+				byteArray[1] = 0x80 | ((code & 0xFC0) >>> 6);
+				byteArray[2] = 0x80 | (code & 0x3F);
+			} else if (code > 0x80) {
+				byteArray[0] = 0xC0 | ((code & 0x7C0) >>> 6);
+				byteArray[1] = 0x80 | (code & 0x3F);
+			} else {
+				byteArray[0] = code;
+			}
+
+			this.parsedData.push(byteArray);
+		}
+
+		this.parsedData = Array.prototype.concat.apply([], this.parsedData);
+
+		if (this.parsedData.length != this.data.length) {
+			this.parsedData.unshift(191);
+			this.parsedData.unshift(187);
+			this.parsedData.unshift(239);
+		}
+	}
+
+	QR8bitByte.prototype = {
+		getLength: function (buffer) {
+			return this.parsedData.length;
+		},
+		write: function (buffer) {
+			for (var i = 0, l = this.parsedData.length; i < l; i++) {
+				buffer.put(this.parsedData[i], 8);
+			}
+		}
+	};
+
+	function QRCodeModel(typeNumber, errorCorrectLevel) {
+		this.typeNumber = typeNumber;
+		this.errorCorrectLevel = errorCorrectLevel;
+		this.modules = null;
+		this.moduleCount = 0;
+		this.dataCache = null;
+		this.dataList = [];
+	}
+
+	QRCodeModel.prototype={addData:function(data){var newData=new QR8bitByte(data);this.dataList.push(newData);this.dataCache=null;},isDark:function(row,col){if(row<0||this.moduleCount<=row||col<0||this.moduleCount<=col){throw new Error(row+","+col);}
+	return this.modules[row][col];},getModuleCount:function(){return this.moduleCount;},make:function(){this.makeImpl(false,this.getBestMaskPattern());},makeImpl:function(test,maskPattern){this.moduleCount=this.typeNumber*4+17;this.modules=new Array(this.moduleCount);for(var row=0;row<this.moduleCount;row++){this.modules[row]=new Array(this.moduleCount);for(var col=0;col<this.moduleCount;col++){this.modules[row][col]=null;}}
+	this.setupPositionProbePattern(0,0);this.setupPositionProbePattern(this.moduleCount-7,0);this.setupPositionProbePattern(0,this.moduleCount-7);this.setupPositionAdjustPattern();this.setupTimingPattern();this.setupTypeInfo(test,maskPattern);if(this.typeNumber>=7){this.setupTypeNumber(test);}
+	if(this.dataCache==null){this.dataCache=QRCodeModel.createData(this.typeNumber,this.errorCorrectLevel,this.dataList);}
+	this.mapData(this.dataCache,maskPattern);},setupPositionProbePattern:function(row,col){for(var r=-1;r<=7;r++){if(row+r<=-1||this.moduleCount<=row+r)continue;for(var c=-1;c<=7;c++){if(col+c<=-1||this.moduleCount<=col+c)continue;if((0<=r&&r<=6&&(c==0||c==6))||(0<=c&&c<=6&&(r==0||r==6))||(2<=r&&r<=4&&2<=c&&c<=4)){this.modules[row+r][col+c]=true;}else{this.modules[row+r][col+c]=false;}}}},getBestMaskPattern:function(){var minLostPoint=0;var pattern=0;for(var i=0;i<8;i++){this.makeImpl(true,i);var lostPoint=QRUtil.getLostPoint(this);if(i==0||minLostPoint>lostPoint){minLostPoint=lostPoint;pattern=i;}}
+	return pattern;},createMovieClip:function(target_mc,instance_name,depth){var qr_mc=target_mc.createEmptyMovieClip(instance_name,depth);var cs=1;this.make();for(var row=0;row<this.modules.length;row++){var y=row*cs;for(var col=0;col<this.modules[row].length;col++){var x=col*cs;var dark=this.modules[row][col];if(dark){qr_mc.beginFill(0,100);qr_mc.moveTo(x,y);qr_mc.lineTo(x+cs,y);qr_mc.lineTo(x+cs,y+cs);qr_mc.lineTo(x,y+cs);qr_mc.endFill();}}}
+	return qr_mc;},setupTimingPattern:function(){for(var r=8;r<this.moduleCount-8;r++){if(this.modules[r][6]!=null){continue;}
+	this.modules[r][6]=(r%2==0);}
+	for(var c=8;c<this.moduleCount-8;c++){if(this.modules[6][c]!=null){continue;}
+	this.modules[6][c]=(c%2==0);}},setupPositionAdjustPattern:function(){var pos=QRUtil.getPatternPosition(this.typeNumber);for(var i=0;i<pos.length;i++){for(var j=0;j<pos.length;j++){var row=pos[i];var col=pos[j];if(this.modules[row][col]!=null){continue;}
+	for(var r=-2;r<=2;r++){for(var c=-2;c<=2;c++){if(r==-2||r==2||c==-2||c==2||(r==0&&c==0)){this.modules[row+r][col+c]=true;}else{this.modules[row+r][col+c]=false;}}}}}},setupTypeNumber:function(test){var bits=QRUtil.getBCHTypeNumber(this.typeNumber);for(var i=0;i<18;i++){var mod=(!test&&((bits>>i)&1)==1);this.modules[Math.floor(i/3)][i%3+this.moduleCount-8-3]=mod;}
+	for(var i=0;i<18;i++){var mod=(!test&&((bits>>i)&1)==1);this.modules[i%3+this.moduleCount-8-3][Math.floor(i/3)]=mod;}},setupTypeInfo:function(test,maskPattern){var data=(this.errorCorrectLevel<<3)|maskPattern;var bits=QRUtil.getBCHTypeInfo(data);for(var i=0;i<15;i++){var mod=(!test&&((bits>>i)&1)==1);if(i<6){this.modules[i][8]=mod;}else if(i<8){this.modules[i+1][8]=mod;}else{this.modules[this.moduleCount-15+i][8]=mod;}}
+	for(var i=0;i<15;i++){var mod=(!test&&((bits>>i)&1)==1);if(i<8){this.modules[8][this.moduleCount-i-1]=mod;}else if(i<9){this.modules[8][15-i-1+1]=mod;}else{this.modules[8][15-i-1]=mod;}}
+	this.modules[this.moduleCount-8][8]=(!test);},mapData:function(data,maskPattern){var inc=-1;var row=this.moduleCount-1;var bitIndex=7;var byteIndex=0;for(var col=this.moduleCount-1;col>0;col-=2){if(col==6)col--;while(true){for(var c=0;c<2;c++){if(this.modules[row][col-c]==null){var dark=false;if(byteIndex<data.length){dark=(((data[byteIndex]>>>bitIndex)&1)==1);}
+	var mask=QRUtil.getMask(maskPattern,row,col-c);if(mask){dark=!dark;}
+	this.modules[row][col-c]=dark;bitIndex--;if(bitIndex==-1){byteIndex++;bitIndex=7;}}}
+	row+=inc;if(row<0||this.moduleCount<=row){row-=inc;inc=-inc;break;}}}}};QRCodeModel.PAD0=0xEC;QRCodeModel.PAD1=0x11;QRCodeModel.createData=function(typeNumber,errorCorrectLevel,dataList){var rsBlocks=QRRSBlock.getRSBlocks(typeNumber,errorCorrectLevel);var buffer=new QRBitBuffer();for(var i=0;i<dataList.length;i++){var data=dataList[i];buffer.put(data.mode,4);buffer.put(data.getLength(),QRUtil.getLengthInBits(data.mode,typeNumber));data.write(buffer);}
+	var totalDataCount=0;for(var i=0;i<rsBlocks.length;i++){totalDataCount+=rsBlocks[i].dataCount;}
+	if(buffer.getLengthInBits()>totalDataCount*8){throw new Error("code length overflow. ("
+	+buffer.getLengthInBits()
+	+">"
+	+totalDataCount*8
+	+")");}
+	if(buffer.getLengthInBits()+4<=totalDataCount*8){buffer.put(0,4);}
+	while(buffer.getLengthInBits()%8!=0){buffer.putBit(false);}
+	while(true){if(buffer.getLengthInBits()>=totalDataCount*8){break;}
+	buffer.put(QRCodeModel.PAD0,8);if(buffer.getLengthInBits()>=totalDataCount*8){break;}
+	buffer.put(QRCodeModel.PAD1,8);}
+	return QRCodeModel.createBytes(buffer,rsBlocks);};QRCodeModel.createBytes=function(buffer,rsBlocks){var offset=0;var maxDcCount=0;var maxEcCount=0;var dcdata=new Array(rsBlocks.length);var ecdata=new Array(rsBlocks.length);for(var r=0;r<rsBlocks.length;r++){var dcCount=rsBlocks[r].dataCount;var ecCount=rsBlocks[r].totalCount-dcCount;maxDcCount=Math.max(maxDcCount,dcCount);maxEcCount=Math.max(maxEcCount,ecCount);dcdata[r]=new Array(dcCount);for(var i=0;i<dcdata[r].length;i++){dcdata[r][i]=0xff&buffer.buffer[i+offset];}
+	offset+=dcCount;var rsPoly=QRUtil.getErrorCorrectPolynomial(ecCount);var rawPoly=new QRPolynomial(dcdata[r],rsPoly.getLength()-1);var modPoly=rawPoly.mod(rsPoly);ecdata[r]=new Array(rsPoly.getLength()-1);for(var i=0;i<ecdata[r].length;i++){var modIndex=i+modPoly.getLength()-ecdata[r].length;ecdata[r][i]=(modIndex>=0)?modPoly.get(modIndex):0;}}
+	var totalCodeCount=0;for(var i=0;i<rsBlocks.length;i++){totalCodeCount+=rsBlocks[i].totalCount;}
+	var data=new Array(totalCodeCount);var index=0;for(var i=0;i<maxDcCount;i++){for(var r=0;r<rsBlocks.length;r++){if(i<dcdata[r].length){data[index++]=dcdata[r][i];}}}
+	for(var i=0;i<maxEcCount;i++){for(var r=0;r<rsBlocks.length;r++){if(i<ecdata[r].length){data[index++]=ecdata[r][i];}}}
+	return data;};var QRMode={MODE_NUMBER:1<<0,MODE_ALPHA_NUM:1<<1,MODE_8BIT_BYTE:1<<2,MODE_KANJI:1<<3};var QRErrorCorrectLevel={L:1,M:0,Q:3,H:2};var QRMaskPattern={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7};var QRUtil={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:(1<<10)|(1<<8)|(1<<5)|(1<<4)|(1<<2)|(1<<1)|(1<<0),G18:(1<<12)|(1<<11)|(1<<10)|(1<<9)|(1<<8)|(1<<5)|(1<<2)|(1<<0),G15_MASK:(1<<14)|(1<<12)|(1<<10)|(1<<4)|(1<<1),getBCHTypeInfo:function(data){var d=data<<10;while(QRUtil.getBCHDigit(d)-QRUtil.getBCHDigit(QRUtil.G15)>=0){d^=(QRUtil.G15<<(QRUtil.getBCHDigit(d)-QRUtil.getBCHDigit(QRUtil.G15)));}
+	return((data<<10)|d)^QRUtil.G15_MASK;},getBCHTypeNumber:function(data){var d=data<<12;while(QRUtil.getBCHDigit(d)-QRUtil.getBCHDigit(QRUtil.G18)>=0){d^=(QRUtil.G18<<(QRUtil.getBCHDigit(d)-QRUtil.getBCHDigit(QRUtil.G18)));}
+	return(data<<12)|d;},getBCHDigit:function(data){var digit=0;while(data!=0){digit++;data>>>=1;}
+	return digit;},getPatternPosition:function(typeNumber){return QRUtil.PATTERN_POSITION_TABLE[typeNumber-1];},getMask:function(maskPattern,i,j){switch(maskPattern){case QRMaskPattern.PATTERN000:return(i+j)%2==0;case QRMaskPattern.PATTERN001:return i%2==0;case QRMaskPattern.PATTERN010:return j%3==0;case QRMaskPattern.PATTERN011:return(i+j)%3==0;case QRMaskPattern.PATTERN100:return(Math.floor(i/2)+Math.floor(j/3))%2==0;case QRMaskPattern.PATTERN101:return(i*j)%2+(i*j)%3==0;case QRMaskPattern.PATTERN110:return((i*j)%2+(i*j)%3)%2==0;case QRMaskPattern.PATTERN111:return((i*j)%3+(i+j)%2)%2==0;default:throw new Error("bad maskPattern:"+maskPattern);}},getErrorCorrectPolynomial:function(errorCorrectLength){var a=new QRPolynomial([1],0);for(var i=0;i<errorCorrectLength;i++){a=a.multiply(new QRPolynomial([1,QRMath.gexp(i)],0));}
+	return a;},getLengthInBits:function(mode,type){if(1<=type&&type<10){switch(mode){case QRMode.MODE_NUMBER:return 10;case QRMode.MODE_ALPHA_NUM:return 9;case QRMode.MODE_8BIT_BYTE:return 8;case QRMode.MODE_KANJI:return 8;default:throw new Error("mode:"+mode);}}else if(type<27){switch(mode){case QRMode.MODE_NUMBER:return 12;case QRMode.MODE_ALPHA_NUM:return 11;case QRMode.MODE_8BIT_BYTE:return 16;case QRMode.MODE_KANJI:return 10;default:throw new Error("mode:"+mode);}}else if(type<41){switch(mode){case QRMode.MODE_NUMBER:return 14;case QRMode.MODE_ALPHA_NUM:return 13;case QRMode.MODE_8BIT_BYTE:return 16;case QRMode.MODE_KANJI:return 12;default:throw new Error("mode:"+mode);}}else{throw new Error("type:"+type);}},getLostPoint:function(qrCode){var moduleCount=qrCode.getModuleCount();var lostPoint=0;for(var row=0;row<moduleCount;row++){for(var col=0;col<moduleCount;col++){var sameCount=0;var dark=qrCode.isDark(row,col);for(var r=-1;r<=1;r++){if(row+r<0||moduleCount<=row+r){continue;}
+	for(var c=-1;c<=1;c++){if(col+c<0||moduleCount<=col+c){continue;}
+	if(r==0&&c==0){continue;}
+	if(dark==qrCode.isDark(row+r,col+c)){sameCount++;}}}
+	if(sameCount>5){lostPoint+=(3+sameCount-5);}}}
+	for(var row=0;row<moduleCount-1;row++){for(var col=0;col<moduleCount-1;col++){var count=0;if(qrCode.isDark(row,col))count++;if(qrCode.isDark(row+1,col))count++;if(qrCode.isDark(row,col+1))count++;if(qrCode.isDark(row+1,col+1))count++;if(count==0||count==4){lostPoint+=3;}}}
+	for(var row=0;row<moduleCount;row++){for(var col=0;col<moduleCount-6;col++){if(qrCode.isDark(row,col)&&!qrCode.isDark(row,col+1)&&qrCode.isDark(row,col+2)&&qrCode.isDark(row,col+3)&&qrCode.isDark(row,col+4)&&!qrCode.isDark(row,col+5)&&qrCode.isDark(row,col+6)){lostPoint+=40;}}}
+	for(var col=0;col<moduleCount;col++){for(var row=0;row<moduleCount-6;row++){if(qrCode.isDark(row,col)&&!qrCode.isDark(row+1,col)&&qrCode.isDark(row+2,col)&&qrCode.isDark(row+3,col)&&qrCode.isDark(row+4,col)&&!qrCode.isDark(row+5,col)&&qrCode.isDark(row+6,col)){lostPoint+=40;}}}
+	var darkCount=0;for(var col=0;col<moduleCount;col++){for(var row=0;row<moduleCount;row++){if(qrCode.isDark(row,col)){darkCount++;}}}
+	var ratio=Math.abs(100*darkCount/moduleCount/moduleCount-50)/5;lostPoint+=ratio*10;return lostPoint;}};var QRMath={glog:function(n){if(n<1){throw new Error("glog("+n+")");}
+	return QRMath.LOG_TABLE[n];},gexp:function(n){while(n<0){n+=255;}
+	while(n>=256){n-=255;}
+	return QRMath.EXP_TABLE[n];},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)};for(var i=0;i<8;i++){QRMath.EXP_TABLE[i]=1<<i;}
+	for(var i=8;i<256;i++){QRMath.EXP_TABLE[i]=QRMath.EXP_TABLE[i-4]^QRMath.EXP_TABLE[i-5]^QRMath.EXP_TABLE[i-6]^QRMath.EXP_TABLE[i-8];}
+	for(var i=0;i<255;i++){QRMath.LOG_TABLE[QRMath.EXP_TABLE[i]]=i;}
+	function QRPolynomial(num,shift){if(num.length==undefined){throw new Error(num.length+"/"+shift);}
+	var offset=0;while(offset<num.length&&num[offset]==0){offset++;}
+	this.num=new Array(num.length-offset+shift);for(var i=0;i<num.length-offset;i++){this.num[i]=num[i+offset];}}
+	QRPolynomial.prototype={get:function(index){return this.num[index];},getLength:function(){return this.num.length;},multiply:function(e){var num=new Array(this.getLength()+e.getLength()-1);for(var i=0;i<this.getLength();i++){for(var j=0;j<e.getLength();j++){num[i+j]^=QRMath.gexp(QRMath.glog(this.get(i))+QRMath.glog(e.get(j)));}}
+	return new QRPolynomial(num,0);},mod:function(e){if(this.getLength()-e.getLength()<0){return this;}
+	var ratio=QRMath.glog(this.get(0))-QRMath.glog(e.get(0));var num=new Array(this.getLength());for(var i=0;i<this.getLength();i++){num[i]=this.get(i);}
+	for(var i=0;i<e.getLength();i++){num[i]^=QRMath.gexp(QRMath.glog(e.get(i))+ratio);}
+	return new QRPolynomial(num,0).mod(e);}};function QRRSBlock(totalCount,dataCount){this.totalCount=totalCount;this.dataCount=dataCount;}
+	QRRSBlock.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]];QRRSBlock.getRSBlocks=function(typeNumber,errorCorrectLevel){var rsBlock=QRRSBlock.getRsBlockTable(typeNumber,errorCorrectLevel);if(rsBlock==undefined){throw new Error("bad rs block @ typeNumber:"+typeNumber+"/errorCorrectLevel:"+errorCorrectLevel);}
+	var length=rsBlock.length/3;var list=[];for(var i=0;i<length;i++){var count=rsBlock[i*3+0];var totalCount=rsBlock[i*3+1];var dataCount=rsBlock[i*3+2];for(var j=0;j<count;j++){list.push(new QRRSBlock(totalCount,dataCount));}}
+	return list;};QRRSBlock.getRsBlockTable=function(typeNumber,errorCorrectLevel){switch(errorCorrectLevel){case QRErrorCorrectLevel.L:return QRRSBlock.RS_BLOCK_TABLE[(typeNumber-1)*4+0];case QRErrorCorrectLevel.M:return QRRSBlock.RS_BLOCK_TABLE[(typeNumber-1)*4+1];case QRErrorCorrectLevel.Q:return QRRSBlock.RS_BLOCK_TABLE[(typeNumber-1)*4+2];case QRErrorCorrectLevel.H:return QRRSBlock.RS_BLOCK_TABLE[(typeNumber-1)*4+3];default:return undefined;}};function QRBitBuffer(){this.buffer=[];this.length=0;}
+	QRBitBuffer.prototype={get:function(index){var bufIndex=Math.floor(index/8);return((this.buffer[bufIndex]>>>(7-index%8))&1)==1;},put:function(num,length){for(var i=0;i<length;i++){this.putBit(((num>>>(length-i-1))&1)==1);}},getLengthInBits:function(){return this.length;},putBit:function(bit){var bufIndex=Math.floor(this.length/8);if(this.buffer.length<=bufIndex){this.buffer.push(0);}
+	if(bit){this.buffer[bufIndex]|=(0x80>>>(this.length%8));}
+	this.length++;}};var QRCodeLimitLength=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]];
+	
+	function _isSupportCanvas() {
+		return typeof CanvasRenderingContext2D != "undefined";
+	}
+	
+	// android 2.x doesn't support Data-URI spec
+	function _getAndroid() {
+		var android = false;
+		var sAgent = navigator.userAgent;
+		
+		if (/android/i.test(sAgent)) { // android
+			android = true;
+			var aMat = sAgent.toString().match(/android ([0-9]\.[0-9])/i);
+			
+			if (aMat && aMat[1]) {
+				android = parseFloat(aMat[1]);
+			}
+		}
+		
+		return android;
+	}
+	
+	var svgDrawer = (function() {
+
+		var Drawing = function (el, htOption) {
+			this._el = el;
+			this._htOption = htOption;
+		};
+
+		Drawing.prototype.draw = function (oQRCode) {
+			var _htOption = this._htOption;
+			var _el = this._el;
+			var nCount = oQRCode.getModuleCount();
+			var nWidth = Math.floor(_htOption.width / nCount);
+			var nHeight = Math.floor(_htOption.height / nCount);
+
+			this.clear();
+
+			function makeSVG(tag, attrs) {
+				var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+				for (var k in attrs)
+					if (attrs.hasOwnProperty(k)) el.setAttribute(k, attrs[k]);
+				return el;
+			}
+
+			var svg = makeSVG("svg" , {'viewBox': '0 0 ' + String(nCount) + " " + String(nCount), 'width': '100%', 'height': '100%', 'fill': _htOption.colorLight});
+			svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+			_el.appendChild(svg);
+
+			svg.appendChild(makeSVG("rect", {"fill": _htOption.colorLight, "width": "100%", "height": "100%"}));
+			svg.appendChild(makeSVG("rect", {"fill": _htOption.colorDark, "width": "1", "height": "1", "id": "template"}));
+
+			for (var row = 0; row < nCount; row++) {
+				for (var col = 0; col < nCount; col++) {
+					if (oQRCode.isDark(row, col)) {
+						var child = makeSVG("use", {"x": String(col), "y": String(row)});
+						child.setAttributeNS("http://www.w3.org/1999/xlink", "href", "#template")
+						svg.appendChild(child);
+					}
+				}
+			}
+		};
+		Drawing.prototype.clear = function () {
+			while (this._el.hasChildNodes())
+				this._el.removeChild(this._el.lastChild);
+		};
+		return Drawing;
+	})();
+
+	var useSVG = document.documentElement.tagName.toLowerCase() === "svg";
+
+	// Drawing in DOM by using Table tag
+	var Drawing = useSVG ? svgDrawer : !_isSupportCanvas() ? (function () {
+		var Drawing = function (el, htOption) {
+			this._el = el;
+			this._htOption = htOption;
+		};
+			
+		/**
+		 * Draw the QRCode
+		 * 
+		 * @param {QRCode} oQRCode
+		 */
+		Drawing.prototype.draw = function (oQRCode) {
+            var _htOption = this._htOption;
+            var _el = this._el;
+			var nCount = oQRCode.getModuleCount();
+			var nWidth = Math.floor(_htOption.width / nCount);
+			var nHeight = Math.floor(_htOption.height / nCount);
+			var aHTML = ['<table style="border:0;border-collapse:collapse;">'];
+			
+			for (var row = 0; row < nCount; row++) {
+				aHTML.push('<tr>');
+				
+				for (var col = 0; col < nCount; col++) {
+					aHTML.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:' + nWidth + 'px;height:' + nHeight + 'px;background-color:' + (oQRCode.isDark(row, col) ? _htOption.colorDark : _htOption.colorLight) + ';"></td>');
+				}
+				
+				aHTML.push('</tr>');
+			}
+			
+			aHTML.push('</table>');
+			_el.innerHTML = aHTML.join('');
+			
+			// Fix the margin values as real size.
+			var elTable = _el.childNodes[0];
+			var nLeftMarginTable = (_htOption.width - elTable.offsetWidth) / 2;
+			var nTopMarginTable = (_htOption.height - elTable.offsetHeight) / 2;
+			
+			if (nLeftMarginTable > 0 && nTopMarginTable > 0) {
+				elTable.style.margin = nTopMarginTable + "px " + nLeftMarginTable + "px";	
+			}
+		};
+		
+		/**
+		 * Clear the QRCode
+		 */
+		Drawing.prototype.clear = function () {
+			this._el.innerHTML = '';
+		};
+		
+		return Drawing;
+	})() : (function () { // Drawing in Canvas
+		function _onMakeImage() {
+			this._elImage.src = this._elCanvas.toDataURL("image/png");
+			this._elImage.style.display = "block";
+			this._elCanvas.style.display = "none";			
+		}
+		
+		// Android 2.1 bug workaround
+		// http://code.google.com/p/android/issues/detail?id=5141
+		if (this._android && this._android <= 2.1) {
+	    	var factor = 1 / window.devicePixelRatio;
+	        var drawImage = CanvasRenderingContext2D.prototype.drawImage; 
+	    	CanvasRenderingContext2D.prototype.drawImage = function (image, sx, sy, sw, sh, dx, dy, dw, dh) {
+	    		if (("nodeName" in image) && /img/i.test(image.nodeName)) {
+		        	for (var i = arguments.length - 1; i >= 1; i--) {
+		            	arguments[i] = arguments[i] * factor;
+		        	}
+	    		} else if (typeof dw == "undefined") {
+	    			arguments[1] *= factor;
+	    			arguments[2] *= factor;
+	    			arguments[3] *= factor;
+	    			arguments[4] *= factor;
+	    		}
+	    		
+	        	drawImage.apply(this, arguments); 
+	    	};
+		}
+		
+		/**
+		 * Check whether the user's browser supports Data URI or not
+		 * 
+		 * @private
+		 * @param {Function} fSuccess Occurs if it supports Data URI
+		 * @param {Function} fFail Occurs if it doesn't support Data URI
+		 */
+		function _safeSetDataURI(fSuccess, fFail) {
+            var self = this;
+            self._fFail = fFail;
+            self._fSuccess = fSuccess;
+
+            // Check it just once
+            if (self._bSupportDataURI === null) {
+                var el = document.createElement("img");
+                var fOnError = function() {
+                    self._bSupportDataURI = false;
+
+                    if (self._fFail) {
+                        self._fFail.call(self);
+                    }
+                };
+                var fOnSuccess = function() {
+                    self._bSupportDataURI = true;
+
+                    if (self._fSuccess) {
+                        self._fSuccess.call(self);
+                    }
+                };
+
+                el.onabort = fOnError;
+                el.onerror = fOnError;
+                el.onload = fOnSuccess;
+                el.src = "data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=="; // the Image contains 1px data.
+                return;
+            } else if (self._bSupportDataURI === true && self._fSuccess) {
+                self._fSuccess.call(self);
+            } else if (self._bSupportDataURI === false && self._fFail) {
+                self._fFail.call(self);
+            }
+		};
+		
+		/**
+		 * Drawing QRCode by using canvas
+		 * 
+		 * @constructor
+		 * @param {HTMLElement} el
+		 * @param {Object} htOption QRCode Options 
+		 */
+		var Drawing = function (el, htOption) {
+    		this._bIsPainted = false;
+    		this._android = _getAndroid();
+		
+			this._htOption = htOption;
+			this._elCanvas = document.createElement("canvas");
+			this._elCanvas.width = htOption.width;
+			this._elCanvas.height = htOption.height;
+			el.appendChild(this._elCanvas);
+			this._el = el;
+			this._oContext = this._elCanvas.getContext("2d");
+			this._bIsPainted = false;
+			this._elImage = document.createElement("img");
+			this._elImage.alt = "Scan me!";
+			this._elImage.style.display = "none";
+			this._el.appendChild(this._elImage);
+			this._bSupportDataURI = null;
+		};
+			
+		/**
+		 * Draw the QRCode
+		 * 
+		 * @param {QRCode} oQRCode 
+		 */
+		Drawing.prototype.draw = function (oQRCode) {
+            var _elImage = this._elImage;
+            var _oContext = this._oContext;
+            var _htOption = this._htOption;
+            
+			var nCount = oQRCode.getModuleCount();
+			var nWidth = _htOption.width / nCount;
+			var nHeight = _htOption.height / nCount;
+			var nRoundedWidth = Math.round(nWidth);
+			var nRoundedHeight = Math.round(nHeight);
+
+			_elImage.style.display = "none";
+			this.clear();
+			
+			for (var row = 0; row < nCount; row++) {
+				for (var col = 0; col < nCount; col++) {
+					var bIsDark = oQRCode.isDark(row, col);
+					var nLeft = col * nWidth;
+					var nTop = row * nHeight;
+					_oContext.strokeStyle = bIsDark ? _htOption.colorDark : _htOption.colorLight;
+					_oContext.lineWidth = 1;
+					_oContext.fillStyle = bIsDark ? _htOption.colorDark : _htOption.colorLight;					
+					_oContext.fillRect(nLeft, nTop, nWidth, nHeight);
+					
+					// 안티 앨리어싱 방지 처리
+					_oContext.strokeRect(
+						Math.floor(nLeft) + 0.5,
+						Math.floor(nTop) + 0.5,
+						nRoundedWidth,
+						nRoundedHeight
+					);
+					
+					_oContext.strokeRect(
+						Math.ceil(nLeft) - 0.5,
+						Math.ceil(nTop) - 0.5,
+						nRoundedWidth,
+						nRoundedHeight
+					);
+				}
+			}
+			
+			this._bIsPainted = true;
+		};
+			
+		/**
+		 * Make the image from Canvas if the browser supports Data URI.
+		 */
+		Drawing.prototype.makeImage = function () {
+			if (this._bIsPainted) {
+				_safeSetDataURI.call(this, _onMakeImage);
+			}
+		};
+			
+		/**
+		 * Return whether the QRCode is painted or not
+		 * 
+		 * @return {Boolean}
+		 */
+		Drawing.prototype.isPainted = function () {
+			return this._bIsPainted;
+		};
+		
+		/**
+		 * Clear the QRCode
+		 */
+		Drawing.prototype.clear = function () {
+			this._oContext.clearRect(0, 0, this._elCanvas.width, this._elCanvas.height);
+			this._bIsPainted = false;
+		};
+		
+		/**
+		 * @private
+		 * @param {Number} nNumber
+		 */
+		Drawing.prototype.round = function (nNumber) {
+			if (!nNumber) {
+				return nNumber;
+			}
+			
+			return Math.floor(nNumber * 1000) / 1000;
+		};
+		
+		return Drawing;
+	})();
+	
+	/**
+	 * Get the type by string length
+	 * 
+	 * @private
+	 * @param {String} sText
+	 * @param {Number} nCorrectLevel
+	 * @return {Number} type
+	 */
+	function _getTypeNumber(sText, nCorrectLevel) {			
+		var nType = 1;
+		var length = _getUTF8Length(sText);
+		
+		for (var i = 0, len = QRCodeLimitLength.length; i <= len; i++) {
+			var nLimit = 0;
+			
+			switch (nCorrectLevel) {
+				case QRErrorCorrectLevel.L :
+					nLimit = QRCodeLimitLength[i][0];
+					break;
+				case QRErrorCorrectLevel.M :
+					nLimit = QRCodeLimitLength[i][1];
+					break;
+				case QRErrorCorrectLevel.Q :
+					nLimit = QRCodeLimitLength[i][2];
+					break;
+				case QRErrorCorrectLevel.H :
+					nLimit = QRCodeLimitLength[i][3];
+					break;
+			}
+			
+			if (length <= nLimit) {
+				break;
+			} else {
+				nType++;
+			}
+		}
+		
+		if (nType > QRCodeLimitLength.length) {
+			throw new Error("Too long data");
+		}
+		
+		return nType;
+	}
+
+	function _getUTF8Length(sText) {
+		var replacedText = encodeURI(sText).toString().replace(/\%[0-9a-fA-F]{2}/g, 'a');
+		return replacedText.length + (replacedText.length != sText ? 3 : 0);
+	}
+	
+	/**
+	 * @class QRCode
+	 * @constructor
+	 * @example 
+	 * new QRCode(document.getElementById("test"), "http://jindo.dev.naver.com/collie");
+	 *
+	 * @example
+	 * var oQRCode = new QRCode("test", {
+	 *    text : "http://naver.com",
+	 *    width : 128,
+	 *    height : 128
+	 * });
+	 * 
+	 * oQRCode.clear(); // Clear the QRCode.
+	 * oQRCode.makeCode("http://map.naver.com"); // Re-create the QRCode.
+	 *
+	 * @param {HTMLElement|String} el target element or 'id' attribute of element.
+	 * @param {Object|String} vOption
+	 * @param {String} vOption.text QRCode link data
+	 * @param {Number} [vOption.width=256]
+	 * @param {Number} [vOption.height=256]
+	 * @param {String} [vOption.colorDark="#000000"]
+	 * @param {String} [vOption.colorLight="#ffffff"]
+	 * @param {QRCode.CorrectLevel} [vOption.correctLevel=QRCode.CorrectLevel.H] [L|M|Q|H] 
+	 */
+	QRCode = function (el, vOption) {
+		this._htOption = {
+			width : 256, 
+			height : 256,
+			typeNumber : 4,
+			colorDark : "#000000",
+			colorLight : "#ffffff",
+			correctLevel : QRErrorCorrectLevel.H
+		};
+		
+		if (typeof vOption === 'string') {
+			vOption	= {
+				text : vOption
+			};
+		}
+		
+		// Overwrites options
+		if (vOption) {
+			for (var i in vOption) {
+				this._htOption[i] = vOption[i];
+			}
+		}
+		
+		if (typeof el == "string") {
+			el = document.getElementById(el);
+		}
+
+		if (this._htOption.useSVG) {
+			Drawing = svgDrawer;
+		}
+		
+		this._android = _getAndroid();
+		this._el = el;
+		this._oQRCode = null;
+		this._oDrawing = new Drawing(this._el, this._htOption);
+		
+		if (this._htOption.text) {
+			this.makeCode(this._htOption.text);	
+		}
+	};
+	
+	/**
+	 * Make the QRCode
+	 * 
+	 * @param {String} sText link data
+	 */
+	QRCode.prototype.makeCode = function (sText) {
+		this._oQRCode = new QRCodeModel(_getTypeNumber(sText, this._htOption.correctLevel), this._htOption.correctLevel);
+		this._oQRCode.addData(sText);
+		this._oQRCode.make();
+		this._el.title = sText;
+		this._oDrawing.draw(this._oQRCode);			
+		this.makeImage();
+	};
+	
+	/**
+	 * Make the Image from Canvas element
+	 * - It occurs automatically
+	 * - Android below 3 doesn't support Data-URI spec.
+	 * 
+	 * @private
+	 */
+	QRCode.prototype.makeImage = function () {
+		if (typeof this._oDrawing.makeImage == "function" && (!this._android || this._android >= 3)) {
+			this._oDrawing.makeImage();
+		}
+	};
+	
+	/**
+	 * Clear the QRCode
+	 */
+	QRCode.prototype.clear = function () {
+		this._oDrawing.clear();
+	};
+	
+	/**
+	 * @name QRCode.CorrectLevel
+	 */
+	QRCode.CorrectLevel = QRErrorCorrectLevel;
+})();
+
+</script>
+<script>
+(function(){
+"use strict";
+
+/* ================= almacenamiento local ================= */
+var LS_PROP = 'vehiculos_propietarios';
+var LS_VEH = 'vehiculos_vehiculos';
+var LS_MOV = 'vehiculos_movimientos';
+var LS_COUNTER = 'vehiculos_counter';
+var LS_PIN = 'vehiculos_admin_pin';
+var SS_ADMIN = 'vehiculos_admin_session';
+var LS_LASTSYNC = 'vehiculos_last_export';
+var LS_CONFIG = 'vehiculos_config';
+var LS_TURNOS = 'vehiculos_turnos';
+
+function getConfig(){
+  var c = lsGet(LS_CONFIG, {});
+  return {
+    permanencia: c.permanencia!=null ? c.permanencia : 10,
+    abandono: c.abandono!=null ? c.abandono : 24,
+    anticipacion: c.anticipacion!=null ? c.anticipacion : 1,
+    abandonoTurno: c.abandonoTurno!=null ? c.abandonoTurno : 1
+  };
+}
+function setConfig(c){ lsSet(LS_CONFIG, c); }
+
+function lsGet(key, def){ try{ var v = localStorage.getItem(key); return v ? JSON.parse(v) : def; }catch(e){ return def; } }
+function lsSet(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+function uid(){ return 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function nextFolio(){
+  var counter = lsGet(LS_COUNTER, {year:new Date().getFullYear(), seq:0});
+  var year = new Date().getFullYear();
+  if(counter.year !== year){ counter.year = year; counter.seq = 0; }
+  counter.seq += 1;
+  lsSet(LS_COUNTER, counter);
+  return 'VEH-'+year+'-'+String(counter.seq).padStart(4,'0');
+}
+
+var state = { propietarios: [], vehiculos: [], movimientos: [], turnos: [] };
+function loadAll(){
+  state.propietarios = lsGet(LS_PROP, []);
+  state.vehiculos = lsGet(LS_VEH, []);
+  state.movimientos = lsGet(LS_MOV, []);
+  state.turnos = lsGet(LS_TURNOS, []);
+}
+function saveProp(){ lsSet(LS_PROP, state.propietarios); }
+function saveVeh(){ lsSet(LS_VEH, state.vehiculos); }
+function saveMov(){ lsSet(LS_MOV, state.movimientos); }
+function saveTurnos(){ lsSet(LS_TURNOS, state.turnos); }
+
+/* ---------- helpers ---------- */
+function todayISO(){ var d=new Date(); return d.toISOString().slice(0,10); }
+function nowHM(){ var d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function fmtDate(iso){ if(!iso) return '—'; var p=iso.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function tc(s){ return (s||'').trim(); }
+var TIPO_LABELS = { bicicleta:'Bicicleta', patineta:'Patineta eléctrica', moto:'Moto eléctrica' };
+
+function propietarioById(id){ return state.propietarios.find(function(p){ return p.id===id; }) || null; }
+function vehiculoById(id){ return state.vehiculos.find(function(v){ return v.id===id; }) || null; }
+function turnoById(id){ return state.turnos.find(function(t){ return t.id===id; }) || null; }
+function turnoDeVehiculo(v){
+  var p = propietarioById(v.propietarioId);
+  return (p && p.turnoId) ? turnoById(p.turnoId) : null;
+}
+/* El turno se define por duración en horas (no por horario fijo), para no tener que
+   reprogramar horarios cada semana: el fin esperado = hora real de ingreso + duración del turno. */
+function finTurnoEsperado(movimiento, turno){
+  var ingreso = new Date(movimiento.fechaIngreso+'T'+movimiento.horaIngreso+':00');
+  return new Date(ingreso.getTime() + turno.horas*3600000);
+}
+function movimientoAbierto(vehiculoId){
+  return state.movimientos.find(function(m){ return m.vehiculoId===vehiculoId && !m.horaSalida; }) || null;
+}
+function ultimoMovimiento(vehiculoId){
+  var lista = state.movimientos.filter(function(m){ return m.vehiculoId===vehiculoId; });
+  if(!lista.length) return null;
+  return lista.reduce(function(a,b){ return (b.fechaIngreso+b.horaIngreso) > (a.fechaIngreso+a.horaIngreso) ? b : a; });
+}
+function horasTranscurridas(fechaISO, horaHM){
+  var ts = new Date(fechaISO+'T'+horaHM+':00');
+  return (Date.now() - ts.getTime()) / 3600000;
+}
+function estadoVehiculo(v){
+  var abierto = movimientoAbierto(v.id);
+  if(!abierto) return 'fuera';
+  var h = horasTranscurridas(abierto.fechaIngreso, abierto.horaIngreso);
+  var cfg = getConfig();
+  var abandonoGenerico = h >= cfg.abandono;
+  var abandonoTurno = false;
+  var turno = turnoDeVehiculo(v);
+  if(turno){
+    var horasDesdeFin = (Date.now() - finTurnoEsperado(abierto, turno).getTime()) / 3600000;
+    abandonoTurno = horasDesdeFin >= cfg.abandonoTurno;
+  }
+  if(abandonoGenerico || abandonoTurno) return 'abandono';
+  if(h >= cfg.permanencia) return 'permanencia';
+  return 'dentro';
+}
+function motivoAbandono(v){
+  var abierto = movimientoAbierto(v.id);
+  if(!abierto) return '';
+  var cfg = getConfig();
+  var h = horasTranscurridas(abierto.fechaIngreso, abierto.horaIngreso);
+  var motivos = [];
+  if(h >= cfg.abandono) motivos.push('supera '+cfg.abandono+'h desde el ingreso');
+  var turno = turnoDeVehiculo(v);
+  if(turno){
+    var horasDesdeFin = (Date.now() - finTurnoEsperado(abierto, turno).getTime()) / 3600000;
+    if(horasDesdeFin >= cfg.abandonoTurno) motivos.push('turno "'+turno.nombre+'" ('+turno.horas+'h) terminó hace '+(Math.round(horasDesdeFin*10)/10)+'h');
+  }
+  return motivos.join(' · ');
+}
+function estadoPill(st){
+  var map = { dentro:['Dentro','pill-ok'], fuera:['Fuera','pill-muted'], permanencia:['Alerta: permanencia','pill-warn'], abandono:['Alerta: abandono','pill-danger'] };
+  var m = map[st] || [st,'pill-muted'];
+  return '<span class="pill '+m[1]+'">'+m[0]+'</span>';
+}
+function showToast(msg, type){
+  var wrap = document.getElementById('toastWrap');
+  if(!wrap){ wrap = document.createElement('div'); wrap.id='toastWrap'; wrap.className='toast-wrap'; document.body.appendChild(wrap); }
+  var t = document.createElement('div');
+  t.className = 'toast'+(type==='danger' ? ' toast-danger' : '');
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 8000);
+}
+
+/* ---------- PIN administrativo / modo administrador (igual que Bitácora) ---------- */
+function getAdminPin(){ return lsGet(LS_PIN, ''); }
+function setAdminPin(pin){ lsSet(LS_PIN, pin); }
+function clearAdminPin(){ localStorage.removeItem(LS_PIN); }
+function isAdmin(){ return sessionStorage.getItem(SS_ADMIN)==='1'; }
+function setAdmin(on){ if(on) sessionStorage.setItem(SS_ADMIN,'1'); else sessionStorage.removeItem(SS_ADMIN); }
+function applyAdminVisibility(){
+  var nav = document.getElementById('navDatos');
+  if(nav) nav.style.display = isAdmin() ? '' : 'none';
+  var lbl = document.getElementById('adminToggleLabel');
+  var btn = document.getElementById('btnAdminToggle');
+  if(lbl && btn){
+    if(isAdmin()){ lbl.textContent = 'Salir de modo administrador'; btn.querySelector('.ic').textContent = '🔓'; }
+    else { lbl.textContent = 'Modo administrador'; btn.querySelector('.ic').textContent = '🔒'; }
+  }
+}
+function openCreatePinModal(intro, onConfirm){
+  var root = document.getElementById('modalRoot');
+  root.innerHTML =
+    '<div class="overlay" id="ov"><div class="modal" style="max-width:380px;">'+
+      '<h3>'+(getAdminPin()?'Cambiar PIN administrativo':'Crear PIN administrativo')+'</h3>'+
+      '<div class="foot" style="color:var(--text-muted); font-size:12.5px; margin-bottom:14px;">'+esc(intro)+'</div>'+
+      field('Nuevo PIN (mín. 4 dígitos)','pinNuevo','password') +
+      field('Confirmar PIN','pinConfirma','password') +
+      '<div id="pinErr" style="color:var(--danger); font-size:12.5px; margin-bottom:8px; display:none;"></div>'+
+      '<div class="modal-actions">'+
+        '<button class="btn btn-ghost" id="cancelBtn">Cancelar</button>'+
+        '<button class="btn btn-primary" id="okBtn">Guardar PIN</button>'+
+      '</div>'+
+    '</div></div>';
+  document.getElementById('cancelBtn').addEventListener('click', function(){ root.innerHTML=''; });
+  document.getElementById('ov').addEventListener('click', function(ev){ if(ev.target.id==='ov') root.innerHTML=''; });
+  document.getElementById('okBtn').addEventListener('click', function(){
+    var p1 = tc(document.getElementById('f-pinNuevo').value);
+    var p2 = tc(document.getElementById('f-pinConfirma').value);
+    var err = document.getElementById('pinErr');
+    if(p1.length<4){ err.textContent='El PIN debe tener al menos 4 dígitos.'; err.style.display='block'; return; }
+    if(p1!==p2){ err.textContent='Los PIN no coinciden.'; err.style.display='block'; return; }
+    setAdminPin(p1);
+    root.innerHTML='';
+    onConfirm();
+  });
+}
+function openPinModal(mensaje, onConfirm){
+  var root = document.getElementById('modalRoot');
+  var pinActual = getAdminPin();
+  if(!pinActual){
+    openCreatePinModal('Aún no has configurado un PIN. Se pedirá cada vez que alguien intente eliminar un registro o entrar a modo administrador.', onConfirm);
+    return;
+  }
+  root.innerHTML =
+    '<div class="overlay" id="ov"><div class="modal" style="max-width:360px;">'+
+      '<h3>PIN administrativo</h3>'+
+      '<div class="foot" style="color:var(--text-muted); font-size:12.5px; margin-bottom:14px;">'+esc(mensaje)+'</div>'+
+      field('Ingresa el PIN','pinCheck','password') +
+      '<div id="pinErr" style="color:var(--danger); font-size:12.5px; margin-bottom:8px; display:none;">PIN incorrecto.</div>'+
+      '<div class="modal-actions">'+
+        '<button class="btn btn-ghost" id="cancelBtn">Cancelar</button>'+
+        '<button class="btn btn-primary" id="okBtn">Confirmar</button>'+
+      '</div>'+
+    '</div></div>';
+  document.getElementById('cancelBtn').addEventListener('click', function(){ root.innerHTML=''; });
+  document.getElementById('ov').addEventListener('click', function(ev){ if(ev.target.id==='ov') root.innerHTML=''; });
+  var input = document.getElementById('f-pinCheck');
+  input.focus();
+  function tryConfirm(){
+    var val = tc(input.value);
+    if(val === pinActual){ root.innerHTML=''; onConfirm(); }
+    else { document.getElementById('pinErr').style.display='block'; input.value=''; input.focus(); }
+  }
+  document.getElementById('okBtn').addEventListener('click', tryConfirm);
+  input.addEventListener('keydown', function(ev){ if(ev.key==='Enter') tryConfirm(); });
+}
+function openTurnoModal(turno, onSave){
+  var root = document.getElementById('modalRoot');
+  root.innerHTML =
+    '<div class="overlay" id="ov"><div class="modal" style="max-width:380px;">'+
+      '<h3>'+(turno?'Editar turno':'Nuevo turno')+'</h3>'+
+      field('Nombre del turno','turnoNombre','text', turno?turno.nombre:'') +
+      field('Duración de la jornada (horas)','turnoHoras','text', turno?String(turno.horas):'8') +
+      '<div id="turnoErr" style="color:var(--danger); font-size:12.5px; margin-bottom:8px; display:none;"></div>'+
+      '<div class="modal-actions">'+
+        '<button class="btn btn-ghost" id="cancelBtn">Cancelar</button>'+
+        '<button class="btn btn-primary" id="okBtn">Guardar</button>'+
+      '</div>'+
+    '</div></div>';
+  document.getElementById('cancelBtn').addEventListener('click', function(){ root.innerHTML=''; });
+  document.getElementById('ov').addEventListener('click', function(ev){ if(ev.target.id==='ov') root.innerHTML=''; });
+  document.getElementById('okBtn').addEventListener('click', function(){
+    var nombre = tc(document.getElementById('f-turnoNombre').value);
+    var horas = parseFloat(document.getElementById('f-turnoHoras').value);
+    var err = document.getElementById('turnoErr');
+    if(!nombre){ err.textContent='Escribe un nombre para el turno.'; err.style.display='block'; return; }
+    if(isNaN(horas) || horas<=0){ err.textContent='La duración debe ser un número mayor a 0.'; err.style.display='block'; return; }
+    if(turno){ turno.nombre = nombre; turno.horas = horas; }
+    else { state.turnos.push({ id: uid(), nombre: nombre, horas: horas }); }
+    saveTurnos();
+    root.innerHTML='';
+    onSave();
+  });
+}
+
+/* ================= router ================= */
+var VIEWS = {
+  dashboard: {title:'Panel estadístico', render: renderDashboard},
+  registrar: {title:'Registrar vehículo', render: renderRegistrar},
+  movimientos: {title:'Bitácora de movimientos', render: renderMovimientos},
+  directorio: {title:'Directorio', render: renderDirectorio},
+  reporte: {title:'Reporte', render: renderReporte},
+  datos: {title:'Datos y respaldo', render: renderDatos}
+};
+var currentView = 'dashboard';
+function go(view){
+  currentView = view;
+  location.hash = view;
+  document.querySelectorAll('.navbtn[data-view]').forEach(function(b){ b.classList.toggle('active', b.dataset.view===view); });
+  document.getElementById('viewTitle').textContent = VIEWS[view].title;
+  document.getElementById('topActions').innerHTML = '';
+  document.getElementById('rail').classList.remove('open');
+  VIEWS[view].render();
+}
+document.querySelectorAll('.navbtn[data-view]').forEach(function(b){ b.addEventListener('click', function(){ go(b.dataset.view); }); });
+document.getElementById('railToggle').addEventListener('click', function(){ document.getElementById('rail').classList.toggle('open'); });
+document.getElementById('btnAdminToggle').addEventListener('click', function(){
+  if(isAdmin()){
+    setAdmin(false); applyAdminVisibility();
+    if(currentView==='datos') go('dashboard'); else rerender();
+  } else {
+    openPinModal('Ingresa el PIN para activar el modo administrador.', function(){ setAdmin(true); applyAdminVisibility(); rerender(); });
+  }
+});
+function rerender(){ if(VIEWS[currentView]) VIEWS[currentView].render(); }
+
+function refreshTopMeta(){
+  var dentro = state.vehiculos.filter(function(v){ return estadoVehiculo(v)!=='fuera'; }).length;
+  var alertas = state.vehiculos.filter(function(v){ var st=estadoVehiculo(v); return st==='permanencia'||st==='abandono'; }).length;
+  var parts = [dentro+' dentro'];
+  if(alertas) parts.push(alertas+' con alerta');
+  document.getElementById('topMeta').textContent = new Date().toLocaleDateString('es-CO',{weekday:'long', day:'numeric', month:'long'}) + '  ·  ' + parts.join(' · ');
+}
+
+/* ---------- widgets compartidos ---------- */
+function field(label, id, type, def, extra){
+  type = type||'text';
+  return '<div class="field"><label for="f-'+id+'">'+label+'</label><input type="'+type+'" id="f-'+id+'" value="'+esc(def||'')+'" '+(extra||'')+' /></div>';
+}
+function kpiCard(label, value, foot){
+  return '<div class="card kpi"><div class="label">'+label+'</div><div class="value tabular">'+value+'</div>'+(foot?'<div class="foot">'+foot+'</div>':'')+'</div>';
+}
+function photoBox(src, placeholder){
+  return '<div class="photo-box">'+(src ? '<img src="'+src+'" />' : '<div class="ph">'+esc(placeholder)+'</div>')+'</div>';
+}
+function fileToDataUrlCompressed(file, maxDim, cb){
+  var reader = new FileReader();
+  reader.onload = function(){
+    var img = new Image();
+    img.onload = function(){
+      var w = img.width, h = img.height;
+      if(w>h){ if(w>maxDim){ h = Math.round(h*maxDim/w); w = maxDim; } }
+      else { if(h>maxDim){ w = Math.round(w*maxDim/h); h = maxDim; } }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      cb(canvas.toDataURL('image/jpeg', 0.75));
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+function playAlertSound(){
+  try{
+    var ctx = new (window.AudioContext||window.webkitAudioContext)();
+    var o = ctx.createOscillator(); var g = ctx.createGain();
+    o.type='sine'; o.frequency.value=880; o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.5);
+    o.start(); o.stop(ctx.currentTime+0.55);
+    setTimeout(function(){
+      var o2=ctx.createOscillator(), g2=ctx.createGain();
+      o2.type='sine'; o2.frequency.value=880; o2.connect(g2); g2.connect(ctx.destination);
+      g2.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g2.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime+0.02);
+      g2.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.5);
+      o2.start(); o2.stop(ctx.currentTime+0.55);
+    }, 650);
+  }catch(e){}
+}
+
+/* ================= DASHBOARD ================= */
+var alertedKeys = {};
+function checkAlertsGlobal(){
+  var nuevas = false;
+  state.vehiculos.forEach(function(v){
+    var st = estadoVehiculo(v);
+    if(st==='permanencia' || st==='abandono'){
+      var key = v.id+'-'+st;
+      if(!alertedKeys[key]){ alertedKeys[key] = true; nuevas = true; }
+    }
+  });
+  if(nuevas) playAlertSound();
+  refreshTopMeta();
+}
+setInterval(checkAlertsGlobal, 30000);
+
+function renderDashboard(){
+  refreshTopMeta();
+  var el = document.getElementById('content');
+  if(state.vehiculos.length===0){
+    el.innerHTML = '<div class="card empty"><h3>Aún no hay vehículos registrados</h3><p>Registra el primer vehículo para empezar a controlar ingresos y salidas.</p>'+
+      '<div style="margin-top:14px;"><button class="btn btn-primary" id="btnGoRegistrar">Registrar vehículo</button></div></div>';
+    document.getElementById('btnGoRegistrar').addEventListener('click', function(){ go('registrar'); });
+    return;
+  }
+  checkAlertsGlobal();
+
+  var totalVeh = state.vehiculos.length;
+  var dentro = state.vehiculos.filter(function(v){ return estadoVehiculo(v)!=='fuera'; });
+  var alertas = state.vehiculos.filter(function(v){ var st=estadoVehiculo(v); return st==='permanencia'||st==='abandono'; });
+  var hoy = todayISO();
+  var ingresosHoy = state.movimientos.filter(function(m){ return m.fechaIngreso===hoy; }).length;
+  var anticipadasHoy = state.movimientos.filter(function(m){ return m.salidaAnticipada && m.fechaSalida===hoy; });
+
+  var porTipo = {};
+  state.vehiculos.forEach(function(v){ porTipo[v.tipo] = (porTipo[v.tipo]||0)+1; });
+
+  var mesActual = hoy.slice(0,7);
+  var usoMes = {};
+  state.movimientos.filter(function(m){ return m.fechaIngreso.slice(0,7)===mesActual; }).forEach(function(m){
+    var v = vehiculoById(m.vehiculoId); if(!v) return;
+    var p = propietarioById(v.propietarioId); if(!p) return;
+    usoMes[p.id] = (usoMes[p.id]||0)+1;
+  });
+  var rankingMes = Object.keys(usoMes).map(function(pid){ return {p: propietarioById(pid), count: usoMes[pid]}; })
+    .filter(function(x){ return x.p; }).sort(function(a,b){ return b.count-a.count; }).slice(0,5);
+
+  el.innerHTML =
+    '<div class="grid-kpi">'+
+      kpiCard('Vehículos registrados', totalVeh, Object.keys(porTipo).map(function(t){return TIPO_LABELS[t]+': '+porTipo[t];}).join(' · ')) +
+      kpiCard('Dentro ahora mismo', dentro.length, '') +
+      kpiCard('Alertas activas', alertas.length, alertas.length ? 'permanencia o abandono' : 'todo en orden') +
+      kpiCard('Ingresos hoy', ingresosHoy, '') +
+      kpiCard('Salidas anticipadas hoy', anticipadasHoy.length, '') +
+    '</div>'+
+
+    (alertas.length ? (
+      '<div class="section-head"><h2>Alertas activas</h2><span class="hint">se avisa con sonido mientras esta pestaña esté abierta</span></div>'+
+      '<div class="card" style="padding:6px 0; margin-bottom:22px;"><div class="tablewrap" style="border:0;"><table><thead><tr><th>Folio</th><th>Tipo</th><th>Propietario</th><th>Ingresó</th><th>Estado</th><th>Motivo</th><th></th></tr></thead><tbody>'+
+      alertas.map(function(v){
+        var p = propietarioById(v.propietarioId);
+        var abierto = movimientoAbierto(v.id);
+        var st = estadoVehiculo(v);
+        return '<tr><td><span class="code">'+esc(v.folio)+'</span></td><td>'+esc(TIPO_LABELS[v.tipo])+'</td><td>'+esc(p?p.nombre:'—')+'</td><td class="tabular">'+fmtDate(abierto.fechaIngreso)+' '+abierto.horaIngreso+'</td><td>'+estadoPill(st)+'</td>'+
+          '<td style="font-size:11.5px; color:var(--text-muted);">'+esc(motivoAbandono(v))+'</td>'+
+          '<td><button class="btn btn-sm" data-salida="'+v.id+'">Registrar salida</button></td></tr>';
+      }).join('') + '</tbody></table></div></div>'
+    ) : '')+
+
+    (anticipadasHoy.length ? (
+      '<div class="section-head"><h2>Salidas anticipadas hoy</h2><span class="hint">salieron antes del fin de su turno</span></div>'+
+      '<div class="card" style="padding:6px 0; margin-bottom:22px;"><div class="tablewrap" style="border:0;"><table><thead><tr><th>Propietario</th><th>Folio</th><th>Turno</th><th>Salió</th><th>Horas antes</th></tr></thead><tbody>'+
+      anticipadasHoy.map(function(m){
+        var v = vehiculoById(m.vehiculoId); var p = v ? propietarioById(v.propietarioId) : null;
+        var turno = v ? turnoDeVehiculo(v) : null;
+        return '<tr><td>'+esc(p?p.nombre:'—')+'</td><td><span class="code">'+esc(v?v.folio:'—')+'</span></td><td>'+esc(turno?turno.nombre:'—')+'</td><td class="tabular">'+m.horaSalida+'</td><td class="tabular">'+m.horasAnticipada+' h</td></tr>';
+      }).join('') + '</tbody></table></div></div>'
+    ) : '')+
+
+    '<div class="section-head"><h2>Consulta rápida</h2><span class="hint">busca por folio, nombre o documento</span></div>'+
+    '<div class="card" style="padding:16px 18px; margin-bottom:22px;">'+
+      '<input type="search" class="search" id="lookupQuery" placeholder="Folio (VEH-2026-0001), nombre del propietario o documento…" style="margin-bottom:14px;" />'+
+      '<div id="lookupResult"></div>'+
+    '</div>'+
+
+    '<div class="section-head"><h2>Uso del mes por persona</h2><span class="hint">para el programa de compensación por uso frecuente</span></div>'+
+    (rankingMes.length ? (
+      '<div class="card" style="padding:16px 18px; margin-bottom:22px;"><div class="chip-list">'+
+        rankingMes.map(function(x,i){ return '<div class="chip"><b>'+(i+1)+'. '+x.count+'</b>'+esc(x.p.nombre)+'</div>'; }).join('') +
+      '</div></div>'
+    ) : '<div class="card" style="padding:16px 18px; margin-bottom:22px;"><div class="foot" style="color:var(--text-muted); font-size:12.5px;">Sin ingresos registrados este mes todavía.</div></div>');
+
+  document.querySelectorAll('[data-salida]').forEach(function(btn){
+    btn.addEventListener('click', function(){ registrarSalida(btn.dataset.salida); rerender(); });
+  });
+
+  var lookupInput = document.getElementById('lookupQuery');
+  var lookupResult = document.getElementById('lookupResult');
+  lookupInput.addEventListener('input', function(){ drawLookup(lookupInput.value); });
+  function drawLookup(q){
+    q = tc(q).toLowerCase();
+    if(!q){ lookupResult.innerHTML = ''; return; }
+    var v = state.vehiculos.find(function(v){
+      if(v.folio.toLowerCase().indexOf(q)>=0 || v.id.toLowerCase()===q) return true;
+      var p = propietarioById(v.propietarioId);
+      return p && (p.nombre.toLowerCase().indexOf(q)>=0 || p.documento.toLowerCase().indexOf(q)>=0);
+    });
+    if(!v){ lookupResult.innerHTML = '<div class="foot" style="color:var(--text-muted); font-size:12.5px;">Sin coincidencias.</div>'; return; }
+    lookupResult.innerHTML = renderLookupCard(v);
+    var btnMov = document.getElementById('btnLookupMov');
+    if(btnMov) btnMov.addEventListener('click', function(){
+      if(btnMov.dataset.accion==='ingreso') registrarIngreso(v.id); else registrarSalida(v.id);
+      drawLookup(q); refreshTopMeta();
+    });
+  }
+}
+function renderLookupCard(v){
+  var p = propietarioById(v.propietarioId);
+  var st = estadoVehiculo(v);
+  var abierto = movimientoAbierto(v.id);
+  var ultimo = ultimoMovimiento(v.id);
+  var turno = turnoDeVehiculo(v);
+  var finEsperado = (abierto && turno) ? finTurnoEsperado(abierto, turno) : null;
+  return '<div class="lookup-grid">'+
+    photoBox(p?p.fotoPropietario:'', 'Sin foto de propietario') +
+    photoBox(v.fotoVehiculo, 'Sin foto de vehículo') +
+    '<div>'+
+      '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;"><span class="code">'+esc(v.folio)+'</span>'+estadoPill(st)+'</div>'+
+      '<div style="font-family:var(--font-display); font-size:18px; margin-bottom:4px;">'+esc(p?p.nombre:'Propietario no encontrado')+'</div>'+
+      '<div style="color:var(--text-muted); font-size:12.5px; margin-bottom:10px;">'+esc(TIPO_LABELS[v.tipo])+(p?' · '+esc(p.area)+' · '+esc(p.documento):'')+'</div>'+
+      (p ? '<div style="font-size:12.5px; margin-bottom:10px;">'+esc(p.celular||'—')+' · '+esc(p.correo||'—')+'</div>' : '')+
+      (turno ? '<div style="font-size:12.5px; margin-bottom:4px;">Turno: '+esc(turno.nombre)+' ('+turno.horas+'h)'+(finEsperado?' · fin esperado: '+String(finEsperado.getHours()).padStart(2,'0')+':'+String(finEsperado.getMinutes()).padStart(2,'0'):'')+'</div>' : '')+
+      (abierto ? '<div class="foot" style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px;">Ingresó: '+fmtDate(abierto.fechaIngreso)+' · '+abierto.horaIngreso+'</div>' : (ultimo ? '<div class="foot" style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px;">Última salida: '+fmtDate(ultimo.fechaSalida)+' · '+(ultimo.horaSalida||'')+'</div>' : ''))+
+      '<button class="btn btn-primary" id="btnLookupMov" data-accion="'+(abierto?'salida':'ingreso')+'">'+(abierto?'Registrar salida':'Registrar ingreso')+'</button>'+
+    '</div>'+
+  '</div>';
+}
+function registrarIngreso(vehiculoId){
+  if(movimientoAbierto(vehiculoId)) return;
+  state.movimientos.push({ id: uid(), vehiculoId: vehiculoId, fechaIngreso: todayISO(), horaIngreso: nowHM(), fechaSalida:'', horaSalida:'', registradoPor:'' });
+  saveMov();
+}
+function registrarSalida(vehiculoId){
+  var m = movimientoAbierto(vehiculoId);
+  if(!m) return null;
+  m.fechaSalida = todayISO(); m.horaSalida = nowHM();
+  var v = vehiculoById(vehiculoId);
+  var turno = v ? turnoDeVehiculo(v) : null;
+  var anticipada = false, horasAnt = 0;
+  if(turno){
+    var diffH = (finTurnoEsperado(m, turno).getTime() - Date.now()) / 3600000;
+    var cfg = getConfig();
+    if(diffH >= cfg.anticipacion){ anticipada = true; horasAnt = Math.round(diffH*10)/10; }
+  }
+  m.salidaAnticipada = anticipada;
+  m.horasAnticipada = horasAnt;
+  saveMov();
+  var key1 = vehiculoId+'-permanencia', key2 = vehiculoId+'-abandono';
+  delete alertedKeys[key1]; delete alertedKeys[key2];
+  if(anticipada){
+    var p = v ? propietarioById(v.propietarioId) : null;
+    playAlertSound();
+    showToast('⚠ Salida anticipada: '+(p?p.nombre:(v?v.folio:''))+' salió '+horasAnt+' h antes del fin de su turno ('+turno.nombre+').', 'warn');
+  }
+  return { anticipada: anticipada, horasAnticipada: horasAnt, turno: turno };
+}
+
+/* ================= REGISTRAR VEHÍCULO ================= */
+var regFotoProp = '', regFotoVeh = '';
+function renderRegistrar(){
+  refreshTopMeta();
+  regFotoProp = ''; regFotoVeh = '';
+  var el = document.getElementById('content');
+  var documentos = Array.from(new Set(state.propietarios.map(function(p){return p.documento;}))).sort();
+  el.innerHTML =
+    '<div class="helpbar">Si el propietario ya tiene otro vehículo registrado, escribe su documento y se autocompletan sus datos.</div>'+
+    '<div class="card" style="padding:22px 24px; max-width:720px;">'+
+      '<h3 style="font-size:15px; margin-bottom:14px;">Datos del propietario</h3>'+
+      '<div class="row2">'+
+        field('Documento','documento','text','','list="dl-doc"') +
+        field('Nombre completo','nombre','text') +
+      '</div>'+
+      '<datalist id="dl-doc">'+ documentos.map(function(d){ return '<option value="'+esc(d)+'">'; }).join('') +'</datalist>'+
+      '<div class="row2">'+ field('Área / Departamento','area','text') + field('Celular','celular','tel') +'</div>'+
+      field('Correo electrónico','correo','email') +
+      '<div class="field"><label for="f-turno">Turno asignado (jornada laboral)</label><select id="f-turno">'+
+        '<option value="">Sin turno asignado</option>'+
+        state.turnos.map(function(t){ return '<option value="'+t.id+'">'+esc(t.nombre)+' ('+t.horas+'h)</option>'; }).join('') +
+      '</select>'+
+      (state.turnos.length ? '' : '<div class="foot" style="color:var(--text-muted); font-size:11.5px; margin-top:4px;">Aún no hay turnos creados. Ve a «Datos y respaldo» (modo administrador) para crearlos.</div>') +
+      '</div>'+
+      '<div class="field"><label>Foto del propietario</label><input type="file" id="f-fotoProp" accept="image/*" capture="user" />'+
+        '<div id="previewProp" style="margin-top:8px; max-width:140px;"></div></div>'+
+
+      '<h3 style="font-size:15px; margin:22px 0 14px;">Datos del vehículo</h3>'+
+      '<div class="field"><label for="f-tipo">Tipo de vehículo</label><select id="f-tipo">'+
+        Object.keys(TIPO_LABELS).map(function(k){ return '<option value="'+k+'">'+TIPO_LABELS[k]+'</option>'; }).join('') +
+      '</select></div>'+
+      '<div class="field"><label>Foto del vehículo</label><input type="file" id="f-fotoVeh" accept="image/*" capture="environment" />'+
+        '<div id="previewVeh" style="margin-top:8px; max-width:140px;"></div></div>'+
+
+      '<div class="modal-actions" style="justify-content:flex-start;">'+
+        '<button class="btn btn-primary" id="btnGuardarVeh">Registrar y generar QR</button>'+
+      '</div>'+
+    '</div>'+
+    '<div id="qrResultado"></div>'+
+
+    '<div class="section-head"><h2>Carga masiva de vehículos (CSV)</h2><span class="hint">para cuando ya tienes la base de datos en una hoja de cálculo</span></div>'+
+    '<div class="card" style="padding:22px 24px; max-width:720px;">'+
+      '<p style="color:var(--text-muted); font-size:13px; margin:0 0 14px;">Reconoce encabezados en español con variaciones comunes (nombre/propietario, cedula/documento, celular/telefono, etc.). '+
+      'Tipos válidos: <span class="code">bicicleta</span>, <span class="code">patineta</span>, <span class="code">moto</span>. Si una fila coincide en documento y tipo con un vehículo ya '+
+      'registrado, se actualiza en vez de duplicarse. Las fotos no se cargan por CSV.</p>'+
+      '<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:6px;">'+
+        '<button class="btn" id="btnPlantillaCSV">⇩ Descargar plantilla CSV</button>'+
+        '<label class="btn" style="cursor:pointer;">⇧ Seleccionar archivo CSV<input type="file" id="f-csvFile" accept=".csv,text/csv" style="display:none;" /></label>'+
+      '</div>'+
+      '<div id="csvPreview" style="margin-top:12px;"></div>'+
+    '</div>';
+
+  document.getElementById('btnPlantillaCSV').addEventListener('click', function(){
+    var contenido = 'documento,nombre,area,celular,correo,tipo\n1020304050,Juan Pérez,Logística,3011234567,juan.perez@empresa.com,bicicleta\n1030405060,María Gómez,Contabilidad,3027654321,maria.gomez@empresa.com,patineta\n';
+    downloadFile('plantilla_vehiculos.csv', 'text/csv', '﻿'+contenido);
+  });
+  document.getElementById('f-csvFile').addEventListener('change', function(ev){
+    var file = ev.target.files[0]; if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){ procesarCSV(reader.result); };
+    reader.readAsText(file, 'UTF-8');
+    ev.target.value = '';
+  });
+
+  document.getElementById('f-documento').addEventListener('input', function(){
+    var val = tc(this.value);
+    var p = state.propietarios.find(function(x){ return x.documento===val; });
+    if(p){
+      document.getElementById('f-nombre').value = p.nombre;
+      document.getElementById('f-area').value = p.area;
+      document.getElementById('f-celular').value = p.celular;
+      document.getElementById('f-correo').value = p.correo;
+      document.getElementById('f-turno').value = p.turnoId || '';
+      if(p.fotoPropietario){ regFotoProp = p.fotoPropietario; document.getElementById('previewProp').innerHTML = '<img src="'+p.fotoPropietario+'" style="width:100%; border-radius:8px;" />'; }
+    }
+  });
+  document.getElementById('f-fotoProp').addEventListener('change', function(ev){
+    var file = ev.target.files[0]; if(!file) return;
+    fileToDataUrlCompressed(file, 400, function(dataUrl){ regFotoProp = dataUrl; document.getElementById('previewProp').innerHTML = '<img src="'+dataUrl+'" style="width:100%; border-radius:8px;" />'; });
+  });
+  document.getElementById('f-fotoVeh').addEventListener('change', function(ev){
+    var file = ev.target.files[0]; if(!file) return;
+    fileToDataUrlCompressed(file, 400, function(dataUrl){ regFotoVeh = dataUrl; document.getElementById('previewVeh').innerHTML = '<img src="'+dataUrl+'" style="width:100%; border-radius:8px;" />'; });
+  });
+
+  document.getElementById('btnGuardarVeh').addEventListener('click', function(){
+    var documento = tc(document.getElementById('f-documento').value);
+    var nombre = tc(document.getElementById('f-nombre').value);
+    if(!documento || !nombre){ alert('Indica al menos documento y nombre del propietario.'); return; }
+    var turnoId = document.getElementById('f-turno').value;
+    var p = state.propietarios.find(function(x){ return x.documento===documento; });
+    if(p){
+      p.nombre = nombre; p.area = tc(document.getElementById('f-area').value); p.celular = tc(document.getElementById('f-celular').value); p.correo = tc(document.getElementById('f-correo').value);
+      p.turnoId = turnoId;
+      if(regFotoProp) p.fotoPropietario = regFotoProp;
+    } else {
+      p = { id: uid(), documento: documento, nombre: nombre, area: tc(document.getElementById('f-area').value), celular: tc(document.getElementById('f-celular').value), correo: tc(document.getElementById('f-correo').value), turnoId: turnoId, fotoPropietario: regFotoProp };
+      state.propietarios.push(p);
+    }
+    saveProp();
+    var v = { id: uid(), folio: nextFolio(), tipo: document.getElementById('f-tipo').value, propietarioId: p.id, fotoVehiculo: regFotoVeh };
+    state.vehiculos.push(v);
+    saveVeh();
+    mostrarQR(v);
+  });
+}
+function mostrarQR(v){
+  var root = document.getElementById('qrResultado');
+  root.innerHTML = '<div class="card" style="padding:22px 24px; max-width:720px; margin-top:16px; text-align:center;">'+
+    '<h3 style="font-size:15px; margin-bottom:10px;">Vehículo registrado: <span class="code">'+esc(v.folio)+'</span></h3>'+
+    '<p style="color:var(--text-muted); font-size:13px; margin-bottom:14px;">Descarga este código QR, imprímelo y pégalo en el vehículo. La app móvil lo leerá para registrar ingresos y salidas.</p>'+
+    '<div id="qrCanvasHolder" style="display:inline-block; padding:12px; background:#fff; border-radius:8px;"></div>'+
+    '<div style="margin-top:14px;"><button class="btn btn-primary" id="btnDescargarQR">⇩ Descargar QR</button> <button class="btn" id="btnOtroVeh">Registrar otro</button></div>'+
+  '</div>';
+  var holder = document.getElementById('qrCanvasHolder');
+  new QRCode(holder, { text: v.id, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+  document.getElementById('btnOtroVeh').addEventListener('click', function(){ renderRegistrar(); });
+  document.getElementById('btnDescargarQR').addEventListener('click', function(){
+    setTimeout(function(){
+      var canvas = holder.querySelector('canvas');
+      var url = canvas ? canvas.toDataURL('image/png') : (holder.querySelector('img') ? holder.querySelector('img').src : null);
+      if(!url) return;
+      var a = document.createElement('a');
+      a.href = url; a.download = 'QR_'+v.folio+'.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }, 50);
+  });
+}
+
+/* ================= CARGA MASIVA CSV ================= */
+var CSV_ALIASES = {
+  documento: ['documento','cedula','identificacion','documento_identidad','dni','numero_documento'],
+  nombre: ['nombre','propietario','nombre_propietario','empleado','nombre_completo'],
+  area: ['area','departamento','area_departamento','dependencia'],
+  celular: ['celular','telefono','numero_celular','movil','numero_telefono'],
+  correo: ['correo','email','correo_electronico','mail'],
+  tipo: ['tipo','tipo_transporte','tipo_vehiculo','medio_transporte']
+};
+var CSV_TIPO_ALIASES = {
+  bicicleta:'bicicleta', bici:'bicicleta', bicicleta_electrica:'bicicleta',
+  patineta:'patineta', patineta_electrica:'patineta', scooter:'patineta', monopatin:'patineta',
+  moto:'moto', moto_electrica:'moto', motoelectrica:'moto'
+};
+function normalizarTextoCSV(s){
+  s = (s==null?'':String(s)).trim().toLowerCase();
+  s = s.normalize ? s.normalize('NFD').replace(/[̀-ͯ]/g,'') : s;
+  return s.split(/\s+/).join('_').split('-').join('_');
+}
+function normalizarTipoCSV(v){ return CSV_TIPO_ALIASES[normalizarTextoCSV(v)] || null; }
+function detectarDelimitadorCSV(text){
+  var primera = (text.split(/\r?\n/)[0]||'');
+  var comas = (primera.match(/,/g)||[]).length;
+  var puntoYComa = (primera.match(/;/g)||[]).length;
+  return puntoYComa > comas ? ';' : ',';
+}
+function parseCSVtexto(text, delim){
+  var rows = [], row = [], field = '', inQuotes = false;
+  for(var i=0;i<text.length;i++){
+    var c = text[i];
+    if(inQuotes){
+      if(c==='"'){ if(text[i+1]==='"'){ field+='"'; i++; } else { inQuotes=false; } }
+      else field += c;
+    } else if(c==='"'){ inQuotes = true; }
+    else if(c===delim){ row.push(field); field=''; }
+    else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+    else if(c==='\r'){ /* ignorar */ }
+    else field += c;
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(function(r){ return r.some(function(f){ return f.trim()!==''; }); });
+}
+function mapearColumnasCSV(headerRow){
+  var normalizados = headerRow.map(normalizarTextoCSV);
+  var mapa = {};
+  Object.keys(CSV_ALIASES).forEach(function(campo){
+    var alias = CSV_ALIASES[campo];
+    for(var i=0;i<normalizados.length;i++){ if(alias.indexOf(normalizados[i])>=0){ mapa[campo]=i; break; } }
+  });
+  return mapa;
+}
+var csvPendientes = [];
+function procesarCSV(text){
+  var delim = detectarDelimitadorCSV(text);
+  var filas = parseCSVtexto(text, delim);
+  var cont = document.getElementById('csvPreview');
+  if(filas.length < 2){ alert('El archivo CSV no tiene datos.'); return; }
+  var mapa = mapearColumnasCSV(filas[0]);
+  if(mapa.nombre===undefined || mapa.documento===undefined){
+    alert('No se pudieron identificar las columnas de nombre/documento. Revisa los encabezados o usa la plantilla.');
+    return;
+  }
+  var validos = [], errores = [];
+  filas.slice(1).forEach(function(fila, i){
+    var nFila = i+2;
+    function get(campo){ var idx = mapa[campo]; return (idx!==undefined && fila[idx]!==undefined) ? tc(fila[idx]) : ''; }
+    var nombre = get('nombre'), documento = get('documento');
+    if(!nombre || !documento){ errores.push('Fila '+nFila+': falta nombre o documento, se omitió.'); return; }
+    var tipoTexto = get('tipo');
+    var tipo = normalizarTipoCSV(tipoTexto) || 'bicicleta';
+    if(tipoTexto && !normalizarTipoCSV(tipoTexto)){ errores.push('Fila '+nFila+': tipo "'+tipoTexto+'" no reconocido, se asignó Bicicleta.'); }
+    var existenteVeh = state.vehiculos.find(function(v){
+      var p = propietarioById(v.propietarioId);
+      return p && p.documento===documento && v.tipo===tipo;
+    });
+    validos.push({
+      documento: documento, nombre: nombre, area: get('area'), celular: get('celular'),
+      correo: get('correo'), tipo: tipo, actualiza: !!existenteVeh, vehiculoId: existenteVeh ? existenteVeh.id : null
+    });
+  });
+  csvPendientes = validos;
+  mostrarPreviewCSV(validos, errores);
+}
+function mostrarPreviewCSV(validos, errores){
+  var cont = document.getElementById('csvPreview');
+  var nuevos = validos.filter(function(v){ return !v.actualiza; }).length;
+  var actualizados = validos.length - nuevos;
+  var filasTabla = validos.slice(0,10).map(function(v){
+    return '<tr><td>'+esc(v.nombre)+'</td><td>'+esc(v.documento)+'</td><td>'+esc(TIPO_LABELS[v.tipo])+'</td><td>'+esc(v.area||'—')+'</td><td>'+(v.actualiza?'Actualiza':'Nuevo')+'</td></tr>';
+  }).join('');
+  var erroresHtml = errores.length ? ('<div class="banner warn"><b>'+errores.length+' observación(es):</b><ul style="margin:6px 0 0; padding-left:18px;">'+errores.slice(0,20).map(function(e){return '<li>'+esc(e)+'</li>';}).join('')+'</ul></div>') : '';
+  cont.innerHTML =
+    '<div class="card" style="padding:16px 18px; background:var(--surface-2);">'+
+      '<p style="margin:0 0 10px;"><b>'+validos.length+'</b> fila(s) lista(s) para importar ('+nuevos+' nueva(s), '+actualizados+' actualización(es)).</p>'+
+      erroresHtml +
+      (validos.length ? ('<div class="tablewrap"><table><thead><tr><th>Nombre</th><th>Documento</th><th>Tipo</th><th>Área</th><th>Acción</th></tr></thead><tbody>'+filasTabla+'</tbody></table></div>'+(validos.length>10?'<p class="foot" style="color:var(--text-muted); font-size:12px; margin-top:6px;">Mostrando 10 de '+validos.length+'.</p>':'')) : '')+
+      '<div style="display:flex; gap:10px; margin-top:12px;">'+
+        '<button class="btn btn-primary" id="btnConfirmarCSV" '+(validos.length?'':'disabled')+'>✓ Confirmar importación ('+validos.length+')</button>'+
+        '<button class="btn" id="btnCancelarCSV">Cancelar</button>'+
+      '</div>'+
+    '</div>';
+  document.getElementById('btnConfirmarCSV').addEventListener('click', function(){
+    csvPendientes.forEach(function(row){
+      var p = state.propietarios.find(function(x){ return x.documento===row.documento; });
+      if(p){ p.nombre=row.nombre; p.area=row.area; p.celular=row.celular; p.correo=row.correo; }
+      else { p = { id: uid(), documento: row.documento, nombre: row.nombre, area: row.area, celular: row.celular, correo: row.correo, fotoPropietario: '' }; state.propietarios.push(p); }
+      if(row.actualiza && row.vehiculoId){
+        var v = vehiculoById(row.vehiculoId); if(v) v.propietarioId = p.id;
+      } else {
+        state.vehiculos.push({ id: uid(), folio: nextFolio(), tipo: row.tipo, propietarioId: p.id, fotoVehiculo: '' });
+      }
+    });
+    saveProp(); saveVeh();
+    csvPendientes = [];
+    document.getElementById('csvPreview').innerHTML = '<div class="banner ok">'+validos.length+' vehículo(s) importado(s) correctamente.</div>';
+    refreshTopMeta();
+  });
+  document.getElementById('btnCancelarCSV').addEventListener('click', function(){ csvPendientes=[]; cont.innerHTML=''; });
+}
+
+/* ================= BITÁCORA DE MOVIMIENTOS ================= */
+var movFilter = { q:'', tipo:'todos', estado:'todos' };
+function renderMovimientos(){
+  refreshTopMeta();
+  var el = document.getElementById('content');
+  if(state.vehiculos.length===0){ el.innerHTML = '<div class="card empty"><h3>Aún no hay vehículos registrados</h3></div>'; return; }
+  el.innerHTML =
+    '<div class="toolbar">'+
+      '<input type="search" class="search" id="mq" placeholder="Buscar por folio, nombre o documento…" value="'+esc(movFilter.q)+'" />'+
+      '<select id="mtipo"><option value="todos">Todos los tipos</option>'+ Object.keys(TIPO_LABELS).map(function(k){ return '<option value="'+k+'" '+(movFilter.tipo===k?'selected':'')+'>'+TIPO_LABELS[k]+'</option>'; }).join('') +'</select>'+
+      '<select id="mestado"><option value="todos">Todos los estados</option><option value="dentro">Dentro</option><option value="fuera">Fuera</option><option value="permanencia">Alerta: permanencia</option><option value="abandono">Alerta: abandono</option></select>'+
+      '<span class="hint" id="mCount" style="color:var(--text-muted); font-size:12.5px; margin-left:auto;"></span>'+
+    '</div>'+
+    '<div class="tablewrap"><table><thead><tr><th>Folio</th><th>Tipo</th><th>Propietario</th><th>Estado</th><th>Últ. ingreso</th><th>Últ. salida</th><th></th></tr></thead><tbody id="movBody"></tbody></table></div>';
+
+  document.getElementById('mtipo').value = movFilter.tipo;
+  document.getElementById('mestado').value = movFilter.estado;
+  document.getElementById('mq').addEventListener('input', function(e){ movFilter.q=e.target.value; drawMovRows(); });
+  document.getElementById('mtipo').addEventListener('change', function(e){ movFilter.tipo=e.target.value; drawMovRows(); });
+  document.getElementById('mestado').addEventListener('change', function(e){ movFilter.estado=e.target.value; drawMovRows(); });
+  drawMovRows();
+
+  function drawMovRows(){
+    var q = movFilter.q.toLowerCase().trim();
+    var rows = state.vehiculos.filter(function(v){
+      if(movFilter.tipo!=='todos' && v.tipo!==movFilter.tipo) return false;
+      var st = estadoVehiculo(v);
+      if(movFilter.estado!=='todos' && st!==movFilter.estado) return false;
+      if(!q) return true;
+      var p = propietarioById(v.propietarioId);
+      var hay = v.folio+' '+(p?p.nombre+' '+p.documento:'');
+      return hay.toLowerCase().indexOf(q)>=0;
+    });
+    document.getElementById('mCount').textContent = rows.length+' vehículo(s)';
+    var tb = document.getElementById('movBody');
+    if(!rows.length){ tb.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:28px;">Sin coincidencias.</td></tr>'; return; }
+    tb.innerHTML = rows.map(function(v){
+      var p = propietarioById(v.propietarioId);
+      var st = estadoVehiculo(v);
+      var abierto = movimientoAbierto(v.id);
+      var ultimo = ultimoMovimiento(v.id);
+      var accion = abierto
+        ? '<button class="btn btn-sm btn-primary" data-salida="'+v.id+'">Registrar salida</button>'
+        : '<button class="btn btn-sm" data-ingreso="'+v.id+'">Registrar ingreso</button>';
+      return '<tr><td><span class="code">'+esc(v.folio)+'</span></td><td>'+esc(TIPO_LABELS[v.tipo])+'</td><td>'+esc(p?p.nombre:'—')+'</td><td>'+estadoPill(st)+'</td>'+
+        '<td class="tabular">'+(abierto?fmtDate(abierto.fechaIngreso)+' '+abierto.horaIngreso:(ultimo?fmtDate(ultimo.fechaIngreso)+' '+ultimo.horaIngreso:'—'))+'</td>'+
+        '<td class="tabular">'+(ultimo&&ultimo.horaSalida?fmtDate(ultimo.fechaSalida)+' '+ultimo.horaSalida:'—')+(ultimo&&ultimo.salidaAnticipada?' <span class="pill pill-warn">Anticipada -'+ultimo.horasAnticipada+'h</span>':'')+'</td>'+
+        '<td>'+accion+'</td></tr>';
+    }).join('');
+    tb.querySelectorAll('[data-salida]').forEach(function(btn){ btn.addEventListener('click', function(){ registrarSalida(btn.dataset.salida); drawMovRows(); refreshTopMeta(); }); });
+    tb.querySelectorAll('[data-ingreso]').forEach(function(btn){ btn.addEventListener('click', function(){ registrarIngreso(btn.dataset.ingreso); drawMovRows(); refreshTopMeta(); }); });
+  }
+}
+
+/* ================= DIRECTORIO ================= */
+function renderDirectorio(){
+  refreshTopMeta();
+  var el = document.getElementById('content');
+  if(!state.propietarios.length){ el.innerHTML = '<div class="card empty"><h3>Aún no hay propietarios registrados</h3></div>'; return; }
+  el.innerHTML = '<div class="tablewrap"><table><thead><tr><th>Nombre</th><th>Documento</th><th>Área</th><th>Celular</th><th>Correo</th><th>Turno</th><th>Vehículos</th><th></th></tr></thead><tbody>'+
+    state.propietarios.slice().sort(function(a,b){return a.nombre.localeCompare(b.nombre);}).map(function(p){
+      var vehs = state.vehiculos.filter(function(v){ return v.propietarioId===p.id; });
+      var turno = p.turnoId ? turnoById(p.turnoId) : null;
+      return '<tr><td>'+esc(p.nombre)+'</td><td>'+esc(p.documento)+'</td><td>'+esc(p.area||'—')+'</td><td>'+esc(p.celular||'—')+'</td><td>'+esc(p.correo||'—')+'</td>'+
+        '<td>'+(turno?esc(turno.nombre)+' ('+turno.horas+'h)':'—')+'</td>'+
+        '<td>'+vehs.map(function(v){
+          return '<span class="code" style="margin-right:2px;">'+esc(v.folio)+'</span>'+
+            '<button class="btn btn-sm btn-ghost" data-ver-qr="'+v.id+'" title="Ver código QR" style="padding:2px 6px; margin-right:8px;">▦ QR</button>';
+        }).join('')+'</td>'+
+        '<td style="white-space:nowrap;"><button class="btn btn-sm" data-credencial="'+p.id+'">🪪 Credencial</button> '+(isAdmin() ? '<button class="btn btn-sm btn-ghost" data-del-prop="'+p.id+'" style="color:var(--danger);">Eliminar</button>' : '')+'</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  document.querySelectorAll('[data-ver-qr]').forEach(function(btn){
+    btn.addEventListener('click', function(){ openVehiculoQrModal(vehiculoById(btn.dataset.verQr)); });
+  });
+  document.querySelectorAll('[data-credencial]').forEach(function(btn){
+    btn.addEventListener('click', function(){ openCredencialModal(propietarioById(btn.dataset.credencial)); });
+  });
+  document.querySelectorAll('[data-del-prop]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(!confirm('¿Eliminar este propietario y sus vehículos registrados? Los movimientos históricos se conservan.')) return;
+      var pid = btn.dataset.delProp;
+      state.vehiculos = state.vehiculos.filter(function(v){ return v.propietarioId!==pid; });
+      state.propietarios = state.propietarios.filter(function(p){ return p.id!==pid; });
+      saveProp(); saveVeh(); renderDirectorio();
+    });
+  });
+}
+function openCredencialModal(p){
+  if(!p) return;
+  var turno = p.turnoId ? turnoById(p.turnoId) : null;
+  var root = document.getElementById('modalRoot');
+  root.innerHTML =
+    '<div class="overlay" id="ov"><div class="modal" style="max-width:360px;">'+
+      '<div class="credencial">'+
+        '<div class="banda"></div>'+
+        '<div class="foto">'+(p.fotoPropietario ? '<img src="'+p.fotoPropietario+'" />' : '<div class="ph">Sin foto</div>')+'</div>'+
+        '<div class="nombre">'+esc(p.nombre)+'</div>'+
+        '<div class="doc">'+esc(p.documento)+'</div>'+
+        '<div class="datos">'+
+          (p.area ? '<div>'+esc(p.area)+'</div>' : '') +
+          (turno ? '<div>Turno: '+esc(turno.nombre)+' ('+turno.horas+'h)</div>' : '') +
+          (p.celular ? '<div>'+esc(p.celular)+'</div>' : '') +
+        '</div>'+
+        '<div class="qrbox" id="credQrHolder"></div>'+
+        '<div class="foot" style="color:var(--text-muted); font-size:11px; margin-top:4px;">Código QR de identificación</div>'+
+      '</div>'+
+      '<div class="modal-actions">'+
+        '<button class="btn btn-ghost" id="cancelBtn">Cerrar</button>'+
+        '<button class="btn btn-primary" id="btnDescargarCred">⇩ Descargar</button>'+
+      '</div>'+
+    '</div></div>';
+  new QRCode(document.getElementById('credQrHolder'), { text: p.documento, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M });
+  document.getElementById('cancelBtn').addEventListener('click', function(){ root.innerHTML=''; });
+  document.getElementById('ov').addEventListener('click', function(ev){ if(ev.target.id==='ov') root.innerHTML=''; });
+  document.getElementById('btnDescargarCred').addEventListener('click', function(){
+    setTimeout(function(){
+      var holder = document.getElementById('credQrHolder');
+      var canvas = holder.querySelector('canvas');
+      var url = canvas ? canvas.toDataURL('image/png') : (holder.querySelector('img') ? holder.querySelector('img').src : null);
+      if(!url) return;
+      var a = document.createElement('a');
+      a.href = url; a.download = 'QR_identificacion_'+p.documento+'.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }, 50);
+  });
+}
+function openVehiculoQrModal(v){
+  if(!v) return;
+  var p = propietarioById(v.propietarioId);
+  var root = document.getElementById('modalRoot');
+  root.innerHTML =
+    '<div class="overlay" id="ov"><div class="modal" style="max-width:340px; text-align:center;">'+
+      '<h3 style="margin-bottom:4px;">Código QR: <span class="code">'+esc(v.folio)+'</span></h3>'+
+      '<div class="foot" style="color:var(--text-muted); font-size:12.5px; margin-bottom:14px;">'+esc(TIPO_LABELS[v.tipo])+(p?' · '+esc(p.nombre):'')+'</div>'+
+      '<div id="dirQrHolder" style="display:inline-block; padding:12px; background:#fff; border:1px solid var(--border); border-radius:10px;"></div>'+
+      '<div class="modal-actions" style="justify-content:center;">'+
+        '<button class="btn btn-ghost" id="cancelBtn">Cerrar</button>'+
+        '<button class="btn btn-primary" id="btnDescargarDirQR">⇩ Descargar QR</button>'+
+      '</div>'+
+    '</div></div>';
+  new QRCode(document.getElementById('dirQrHolder'), { text: v.id, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+  document.getElementById('cancelBtn').addEventListener('click', function(){ root.innerHTML=''; });
+  document.getElementById('ov').addEventListener('click', function(ev){ if(ev.target.id==='ov') root.innerHTML=''; });
+  document.getElementById('btnDescargarDirQR').addEventListener('click', function(){
+    setTimeout(function(){
+      var holder = document.getElementById('dirQrHolder');
+      var canvas = holder.querySelector('canvas');
+      var url = canvas ? canvas.toDataURL('image/png') : (holder.querySelector('img') ? holder.querySelector('img').src : null);
+      if(!url) return;
+      var a = document.createElement('a');
+      a.href = url; a.download = 'QR_'+v.folio+'.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }, 50);
+  });
+}
+
+/* ================= REPORTE ================= */
+var reporteMes = todayISO().slice(0,7);
+function renderReporte(){
+  refreshTopMeta();
+  var el = document.getElementById('content');
+  var rows = state.movimientos.filter(function(m){ return m.fechaIngreso.slice(0,7)===reporteMes; });
+  var porPersona = {};
+  rows.forEach(function(m){
+    var v = vehiculoById(m.vehiculoId); if(!v) return;
+    var p = propietarioById(v.propietarioId); if(!p) return;
+    if(!porPersona[p.id]) porPersona[p.id] = {p:p, count:0};
+    porPersona[p.id].count++;
+  });
+  var ranking = Object.keys(porPersona).map(function(k){return porPersona[k];}).sort(function(a,b){return b.count-a.count;});
+
+  var anticipadas = state.movimientos.filter(function(m){ return m.salidaAnticipada && m.fechaSalida && m.fechaSalida.slice(0,7)===reporteMes; })
+    .map(function(m){ var v = vehiculoById(m.vehiculoId); var p = v ? propietarioById(v.propietarioId) : null; var turno = v ? turnoDeVehiculo(v) : null; return {m:m, v:v, p:p, turno:turno}; })
+    .filter(function(x){ return x.p; })
+    .sort(function(a,b){ return b.m.horasAnticipada - a.m.horasAnticipada; });
+
+  el.innerHTML =
+    '<div class="card" style="padding:16px 18px; margin-bottom:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">'+
+      '<h2 style="font-size:16px;">Ranking mensual de uso</h2>'+
+      '<div class="field" style="margin:0;"><input type="month" id="f-mes" value="'+reporteMes+'" /></div>'+
+      '<button class="btn" id="btnDescargarReporte" style="margin-left:auto;">⇩ Descargar CSV</button>'+
+    '</div>'+
+    '<div class="tablewrap"><table><thead><tr><th>#</th><th>Propietario</th><th>Área</th><th>Ingresos en el mes</th></tr></thead><tbody>'+
+      (ranking.length ? ranking.map(function(x,i){ return '<tr><td>'+(i+1)+'</td><td>'+esc(x.p.nombre)+'</td><td>'+esc(x.p.area||'—')+'</td><td class="tabular">'+x.count+'</td></tr>'; }).join('')
+        : '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:28px;">Sin ingresos registrados en este mes.</td></tr>') +
+    '</tbody></table></div>'+
+
+    '<div class="section-head"><h2>Salidas anticipadas del mes</h2><span class="hint">salieron antes del fin de su turno asignado</span></div>'+
+    '<div class="card" style="padding:6px 0; margin-bottom:22px;"><div class="tablewrap" style="border:0;"><table><thead><tr><th>Propietario</th><th>Área</th><th>Folio</th><th>Turno</th><th>Fecha</th><th>Salió</th><th>Horas antes</th></tr></thead><tbody>'+
+      (anticipadas.length ? anticipadas.map(function(x){
+        return '<tr><td>'+esc(x.p.nombre)+'</td><td>'+esc(x.p.area||'—')+'</td><td><span class="code">'+esc(x.v?x.v.folio:'—')+'</span></td><td>'+esc(x.turno?x.turno.nombre:'—')+'</td>'+
+          '<td class="tabular">'+fmtDate(x.m.fechaSalida)+'</td><td class="tabular">'+x.m.horaSalida+'</td><td class="tabular">'+x.m.horasAnticipada+' h</td></tr>';
+      }).join('') : '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:28px;">Sin salidas anticipadas registradas en este mes.</td></tr>') +
+    '</tbody></table></div></div>';
+
+  document.getElementById('f-mes').addEventListener('change', function(e){ reporteMes = e.target.value; renderReporte(); });
+  document.getElementById('btnDescargarReporte').addEventListener('click', function(){
+    var lines = [['#','Propietario','Documento','Area','Ingresos'].join(',')];
+    ranking.forEach(function(x,i){ lines.push([i+1, x.p.nombre, x.p.documento, x.p.area, x.count].map(csvEscape).join(',')); });
+    lines.push('');
+    lines.push(['Propietario','Documento','Area','Folio','Turno','Fecha','Hora salida','Horas anticipadas'].join(','));
+    anticipadas.forEach(function(x){
+      lines.push([x.p.nombre, x.p.documento, x.p.area, x.v?x.v.folio:'', x.turno?x.turno.nombre:'', x.m.fechaSalida, x.m.horaSalida, x.m.horasAnticipada].map(csvEscape).join(','));
+    });
+    downloadFile('reporte_uso_'+reporteMes+'.csv', 'text/csv', '﻿'+lines.join('\r\n'));
+  });
+}
+function mergeById(existentes, entrantes){
+  var byId = {}; existentes.forEach(function(x){ byId[x.id]=x; });
+  entrantes.forEach(function(x){ byId[x.id] = x; });
+  return Object.keys(byId).map(function(k){ return byId[k]; });
+}
+function csvEscape(v){ v = v==null?'':String(v); if(/[",\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function downloadFile(filename, mime, content){
+  var blob = new Blob([content], {type: mime + ';charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+/* ================= DATOS Y RESPALDO ================= */
+function renderDatos(){
+  refreshTopMeta();
+  var el = document.getElementById('content');
+  if(!isAdmin()){
+    el.innerHTML = '<div class="card empty"><h3>Acceso restringido</h3><p>Esta sección es solo para el modo administrador.</p>'+
+      '<div style="margin-top:14px;"><button class="btn btn-primary" id="btnGoAdmin">🔒 Activar modo administrador</button></div></div>';
+    document.getElementById('btnGoAdmin').addEventListener('click', function(){ document.getElementById('btnAdminToggle').click(); });
+    return;
+  }
+  el.innerHTML =
+    '<div class="row2" style="align-items:start;">'+
+      '<div class="card" style="padding:20px 22px;">'+
+        '<h3 style="font-size:15px; margin-bottom:8px;">Exportar</h3>'+
+        '<p style="color:var(--text-muted); font-size:13px; margin:0 0 14px;">Respaldo completo (propietarios, vehículos y movimientos, incluye fotos).</p>'+
+        '<button class="btn btn-primary" id="btnExportJson">Respaldo completo (JSON)</button>'+
+        '<div id="exportMsg" style="font-size:12.5px; color:var(--text-muted); margin-top:10px;"></div>'+
+      '</div>'+
+      '<div class="card" style="padding:20px 22px;">'+
+        '<h3 style="font-size:15px; margin-bottom:8px;">Importar</h3>'+
+        '<p style="color:var(--text-muted); font-size:13px; margin:0 0 14px;">Carga un respaldo JSON. Se agrega a lo ya existente.</p>'+
+        '<input type="file" id="fileInput" accept=".json,application/json" />'+
+        '<div id="importMsg" style="font-size:12.5px; color:var(--text-muted); margin-top:10px;"></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="section-head"><h2>Turnos laborales</h2><span class="hint">se definen por duración en horas; el fin de jornada de cada persona se calcula desde su hora real de ingreso, no por horario fijo</span></div>'+
+    '<div class="card" style="padding:18px 22px; margin-bottom:22px;">'+
+      (state.turnos.length ? (
+        '<div class="tablewrap" style="margin-bottom:12px;"><table><thead><tr><th>Nombre</th><th>Duración</th><th>Empleados</th><th></th></tr></thead><tbody>'+
+        state.turnos.map(function(t){
+          var n = state.propietarios.filter(function(p){ return p.turnoId===t.id; }).length;
+          return '<tr><td>'+esc(t.nombre)+'</td><td class="tabular">'+t.horas+' h</td><td class="tabular">'+n+'</td>'+
+            '<td style="white-space:nowrap;"><button class="btn btn-sm btn-ghost" data-edit-turno="'+t.id+'">Editar</button> <button class="btn btn-sm btn-ghost" data-del-turno="'+t.id+'" style="color:var(--danger);">Eliminar</button></td></tr>';
+        }).join('') + '</tbody></table></div>'
+      ) : '<p style="color:var(--text-muted); font-size:13px; margin:0 0 12px;">Aún no hay turnos creados.</p>') +
+      '<button class="btn btn-primary" id="btnNuevoTurno">+ Agregar turno</button>'+
+    '</div>'+
+    '<div class="section-head"><h2>Umbrales de alerta</h2><span class="hint">se guardan en el respaldo JSON y se aplican también en la app móvil al importarlo</span></div>'+
+    '<div class="card" style="padding:18px 22px; margin-bottom:22px;">'+
+      '<div class="row2">'+
+        field('Horas para alerta de permanencia (genérico)','cfgPermanencia','text', String(getConfig().permanencia)) +
+        field('Horas para alerta de abandono (genérico, sin turno)','cfgAbandono','text', String(getConfig().abandono)) +
+      '</div>'+
+      '<div class="row2">'+
+        field('Horas antes del fin de turno para alertar salida anticipada','cfgAnticipacion','text', String(getConfig().anticipacion)) +
+        field('Horas después del fin de turno para declarar abandono','cfgAbandonoTurno','text', String(getConfig().abandonoTurno)) +
+      '</div>'+
+      '<button class="btn btn-primary" id="btnGuardarConfig">Guardar umbrales</button>'+
+      '<div id="cfgMsg" style="font-size:12.5px; color:var(--text-muted); margin-top:8px;"></div>'+
+    '</div>'+
+    '<div class="section-head"><h2>Seguridad</h2></div>'+
+    '<div class="card" style="padding:18px 22px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:22px;">'+
+      '<div><div style="font-weight:600;">PIN administrativo</div><div style="color:var(--text-muted); font-size:12.5px;">'+(getAdminPin() ? 'Configurado.' : 'No configurado.')+'</div></div>'+
+      '<div style="display:flex; gap:8px;">'+
+        (getAdminPin() ? '<button class="btn" id="btnQuitarPin" style="border-color:var(--danger-bg); color:var(--danger);">Quitar PIN</button>' : '')+
+        '<button class="btn btn-primary" id="btnCambiarPin">'+(getAdminPin()?'Cambiar PIN':'Configurar PIN')+'</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="section-head"><h2>Zona de riesgo</h2><span class="hint">cada acción es permanente e independiente</span></div>'+
+    '<div class="row3">'+
+      riskCard('Movimientos', state.movimientos.length+' registro(s)', 'btnWipeMov') +
+      riskCard('Vehículos', state.vehiculos.length+' registro(s)', 'btnWipeVeh') +
+      riskCard('Propietarios', state.propietarios.length+' registro(s)', 'btnWipeProp') +
+    '</div>'+
+    '<div class="card" style="padding:18px 22px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-top:14px; border-color:var(--danger);">'+
+      '<div><div style="font-weight:600; color:var(--danger);">Borrado completo</div><div style="color:var(--text-muted); font-size:12.5px;">Elimina todo. No se puede deshacer.</div></div>'+
+      '<button class="btn btn-primary" id="btnWipeAll" style="background:var(--danger); border-color:var(--danger);">Borrar todo</button>'+
+    '</div>';
+
+  document.getElementById('btnGuardarConfig').addEventListener('click', function(){
+    var p = parseFloat(document.getElementById('f-cfgPermanencia').value);
+    var a = parseFloat(document.getElementById('f-cfgAbandono').value);
+    var anticip = parseFloat(document.getElementById('f-cfgAnticipacion').value);
+    var abTurno = parseFloat(document.getElementById('f-cfgAbandonoTurno').value);
+    if([p,a,anticip,abTurno].some(function(x){ return isNaN(x) || x<=0; })){
+      document.getElementById('cfgMsg').textContent = 'Ingresa valores numéricos válidos.'; document.getElementById('cfgMsg').style.color='var(--danger)'; return;
+    }
+    setConfig({permanencia:p, abandono:a, anticipacion:anticip, abandonoTurno:abTurno});
+    document.getElementById('cfgMsg').textContent = 'Umbrales guardados.'; document.getElementById('cfgMsg').style.color='var(--good)';
+    rerender();
+  });
+  var btnNuevoTurno = document.getElementById('btnNuevoTurno');
+  if(btnNuevoTurno) btnNuevoTurno.addEventListener('click', function(){ openTurnoModal(null, function(){ renderDatos(); }); });
+  document.querySelectorAll('[data-edit-turno]').forEach(function(btn){
+    btn.addEventListener('click', function(){ openTurnoModal(turnoById(btn.dataset.editTurno), function(){ renderDatos(); }); });
+  });
+  document.querySelectorAll('[data-del-turno]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = btn.dataset.delTurno;
+      var afectados = state.propietarios.filter(function(p){ return p.turnoId===id; }).length;
+      var msg = '¿Eliminar este turno?' + (afectados ? ' '+afectados+' empleado(s) quedarán sin turno asignado.' : '');
+      if(!confirm(msg)) return;
+      state.turnos = state.turnos.filter(function(t){ return t.id!==id; });
+      saveTurnos();
+      state.propietarios.forEach(function(p){ if(p.turnoId===id) p.turnoId=''; });
+      saveProp();
+      renderDatos();
+    });
+  });
+  document.getElementById('btnExportJson').addEventListener('click', function(){
+    downloadFile('respaldo_vehiculos_'+todayISO()+'.json', 'application/json', JSON.stringify({propietarios:state.propietarios, vehiculos:state.vehiculos, movimientos:state.movimientos, turnos:state.turnos, config:getConfig()}, null, 2));
+    document.getElementById('exportMsg').textContent = 'Respaldo descargado.';
+  });
+  document.getElementById('fileInput').addEventListener('change', function(ev){
+    var file = ev.target.files[0]; if(!file) return;
+    var msg = document.getElementById('importMsg');
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var data = JSON.parse(reader.result);
+        if(Array.isArray(data.propietarios)){ state.propietarios = mergeById(state.propietarios, data.propietarios); saveProp(); }
+        if(Array.isArray(data.vehiculos)){ state.vehiculos = mergeById(state.vehiculos, data.vehiculos); saveVeh(); }
+        if(Array.isArray(data.movimientos)){ state.movimientos = mergeById(state.movimientos, data.movimientos); saveMov(); }
+        if(Array.isArray(data.turnos)){ state.turnos = mergeById(state.turnos, data.turnos); saveTurnos(); }
+        if(data.config && typeof data.config==='object'){ setConfig(data.config); }
+        renderDatos();
+        msg = document.getElementById('importMsg');
+        if(msg){ msg.textContent = 'Respaldo importado correctamente.'; msg.style.color='var(--good)'; }
+      }catch(err){ msg.textContent = 'No se pudo leer el archivo.'; msg.style.color='var(--danger)'; }
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+  document.getElementById('btnCambiarPin').addEventListener('click', function(){
+    if(getAdminPin()){ openPinModal('Ingresa el PIN actual para cambiarlo.', function(){ openCreatePinModal('Escribe el nuevo PIN.', function(){ renderDatos(); }); }); }
+    else { openCreatePinModal('Se pedirá para entrar a modo administrador.', function(){ renderDatos(); }); }
+  });
+  var btnQuitarPin = document.getElementById('btnQuitarPin');
+  if(btnQuitarPin) btnQuitarPin.addEventListener('click', function(){
+    openPinModal('Ingresa el PIN actual para quitarlo.', function(){ clearAdminPin(); renderDatos(); });
+  });
+  document.getElementById('btnWipeMov').addEventListener('click', function(){
+    if(!confirm('¿Eliminar los '+state.movimientos.length+' movimiento(s)? No se puede deshacer.')) return;
+    localStorage.removeItem(LS_MOV); loadAll(); renderDatos();
+  });
+  document.getElementById('btnWipeVeh').addEventListener('click', function(){
+    if(!confirm('¿Eliminar los '+state.vehiculos.length+' vehículo(s)? No se puede deshacer.')) return;
+    localStorage.removeItem(LS_VEH); loadAll(); renderDatos();
+  });
+  document.getElementById('btnWipeProp').addEventListener('click', function(){
+    if(!confirm('¿Eliminar los '+state.propietarios.length+' propietario(s)? No se puede deshacer.')) return;
+    localStorage.removeItem(LS_PROP); loadAll(); renderDatos();
+  });
+  document.getElementById('btnWipeAll').addEventListener('click', function(){
+    openPinModal('Esto eliminará permanentemente todos los datos. Ingresa el PIN administrativo.', function(){
+      [LS_PROP, LS_VEH, LS_MOV, LS_COUNTER].forEach(function(k){ localStorage.removeItem(k); });
+      loadAll(); renderDatos();
+    });
+  });
+}
+function riskCard(title, countText, btnId){
+  return '<div class="card" style="padding:16px 18px; display:flex; flex-direction:column; gap:10px;">'+
+    '<div><div style="font-weight:600; font-size:13.5px;">'+title+'</div><div style="color:var(--text-muted); font-size:12.5px;">'+countText+'</div></div>'+
+    '<button class="btn" id="'+btnId+'" style="border-color:var(--danger-bg); color:var(--danger); align-self:flex-start;">Borrar</button>'+
+  '</div>';
+}
+
+/* ---------- init ---------- */
+loadAll();
+applyAdminVisibility();
+var startView = (location.hash||'').replace('#','');
+if(!VIEWS[startView]) startView = 'dashboard';
+if(startView==='datos' && !isAdmin()) startView = 'dashboard';
+go(startView);
+
+})();
+</script>
+</body>
+</html>
