@@ -178,11 +178,11 @@ tbody tr:hover{background:var(--surface-2);}
     </div>
     <button class="navbtn navbtn-white" data-view="dashboard"><span class="ic">◧</span> Panel estadístico</button>
     <button class="navbtn" data-view="registrar"><span class="ic">✎</span> Registrar vehículo</button>
-    <button class="navbtn" data-view="movimientos"><span class="ic">≣</span> Bitácora de movimientos</button>
+    <button class="navbtn" data-view="movimientos"><span class="ic">≣</span> Bandeja</button>
     <button class="navbtn" data-view="directorio"><span class="ic">⚇</span> Directorio</button>
     <button class="navbtn" data-view="reporte"><span class="ic">▤</span> Reporte</button>
     <button class="navbtn" data-view="datos" id="navDatos"><span class="ic">⇅</span> Datos y respaldo</button>
-    <button class="navbtn navbtn-white adminbtn" id="btnAdminToggle"><span class="ic">🔒</span> <span id="adminToggleLabel">Modo administrador</span></button>
+    <button class="navbtn navbtn-white adminbtn" id="btnAdminToggle"><span class="ic">🔒</span> <span id="adminToggleLabel">Administrador</span></button>
   </nav>
 
   <div class="main">
@@ -959,8 +959,8 @@ function applyAdminVisibility(){
   var lbl = document.getElementById('adminToggleLabel');
   var btn = document.getElementById('btnAdminToggle');
   if(lbl && btn){
-    if(isAdmin()){ lbl.textContent = 'Salir de modo administrador'; btn.querySelector('.ic').textContent = '🔓'; }
-    else { lbl.textContent = 'Modo administrador'; btn.querySelector('.ic').textContent = '🔒'; }
+    if(isAdmin()){ lbl.textContent = 'Salir de administrador'; btn.querySelector('.ic').textContent = '🔓'; }
+    else { lbl.textContent = 'Administrador'; btn.querySelector('.ic').textContent = '🔒'; }
   }
 }
 function openCreatePinModal(intro, onConfirm){
