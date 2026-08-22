@@ -61,6 +61,13 @@ a{color:inherit;}
 
 .card{background:var(--surface); border:1px solid var(--accent-bg); border-radius:var(--radius); box-shadow:var(--shadow);}
 .grid-kpi{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:22px;}
+.typebar-row{display:grid; grid-template-columns:180px 1fr 34px; align-items:center; gap:14px; padding:8px 0;}
+.typebar-row + .typebar-row{border-top:1px solid var(--accent-bg);}
+.typebar-label{display:flex; align-items:center; gap:9px; font-size:13.5px; color:var(--text);}
+.typebar-icon{font-size:19px; line-height:1;}
+.typebar-track{background:var(--field-bg); border-radius:99px; height:11px; overflow:hidden;}
+.typebar-fill{background:var(--accent); height:100%; border-radius:99px; transition:width .35s ease;}
+.typebar-count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-weight:700; text-align:right; color:var(--accent-ink);}
 .kpi{padding:9px 11px;}
 .card.kpi, .card-muted{background:var(--field-bg);}
 .kpi .label{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted);}
@@ -886,6 +893,7 @@ function fmtDate(iso){ if(!iso) return '—'; var p=iso.split('-'); return p[2]+
 function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 function tc(s){ return (s||'').trim(); }
 var TIPO_LABELS = { bicicleta:'Bicicleta', patineta:'Patineta eléctrica', moto:'Moto eléctrica' };
+var TIPO_ICONS = { bicicleta:'🚲', patineta:'🛴', moto:'🏍️' };
 
 function propietarioById(id){ return state.propietarios.find(function(p){ return p.id===id; }) || null; }
 function vehiculoById(id){ return state.vehiculos.find(function(v){ return v.id===id; }) || null; }
@@ -1104,6 +1112,18 @@ function field(label, id, type, def, extra){
 function kpiCard(label, value, foot){
   return '<div class="card kpi"><div class="label">'+label+'</div><div class="value tabular">'+value+'</div>'+(foot?'<div class="foot">'+foot+'</div>':'')+'</div>';
 }
+function tipoBarsHTML(porTipo){
+  var max = Math.max(1, porTipo.bicicleta||0, porTipo.patineta||0, porTipo.moto||0);
+  return Object.keys(TIPO_LABELS).map(function(t){
+    var c = porTipo[t]||0;
+    var pct = Math.round((c/max)*100);
+    return '<div class="typebar-row">'+
+      '<div class="typebar-label"><span class="typebar-icon">'+TIPO_ICONS[t]+'</span>'+TIPO_LABELS[t]+'</div>'+
+      '<div class="typebar-track"><div class="typebar-fill" style="width:'+pct+'%;"></div></div>'+
+      '<div class="typebar-count">'+c+'</div>'+
+    '</div>';
+  }).join('');
+}
 function photoBox(src, placeholder){
   return '<div class="photo-box">'+(src ? '<img src="'+src+'" />' : '<div class="ph">'+esc(placeholder)+'</div>')+'</div>';
 }
@@ -1198,6 +1218,11 @@ function renderDashboard(){
       kpiCard('Alertas activas', alertas.length, alertas.length ? 'permanencia o abandono' : 'todo en orden') +
       kpiCard('Ingresos hoy', ingresosHoy, '') +
       kpiCard('Salidas anticipadas hoy', anticipadasHoy.length, '') +
+    '</div>'+
+
+    '<div class="section-head"><h2>Vehículos por tipo</h2><span class="hint">'+totalVeh+' registrado(s) en total</span></div>'+
+    '<div class="card" style="padding:14px 20px; margin-bottom:22px;">'+
+      tipoBarsHTML(porTipo) +
     '</div>'+
 
     (alertas.length ? (
