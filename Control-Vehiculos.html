@@ -1302,7 +1302,7 @@ function renderDashboard(){
     '<div class="section-head"><h2>Tipos de vehículo y departamentos frecuentes</h2><span class="hint">mayor asistencia · últimos 15 días</span></div>'+
     (selectedStatKey ? '<div class="banner ok" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Mostrando ingresos de <b>'+esc(selectedStatLabel)+'</b> en los últimos 15 días.</span><a href="#" id="quitarStatFiltro" style="color:inherit; text-decoration:underline; white-space:nowrap;">✕ Quitar filtro</a></div>' : '')+
     '<div class="row2">'+
-      freqCardVeh('Tipos de vehículo más frecuentes', tiposFrecuentes, 'tipo', TIPO_ICONS) +
+      freqCardVeh('Vehículo más usado', tiposFrecuentes, 'tipo', TIPO_ICONS) +
       freqCardVeh('Departamentos con mayor asistencia (top 5)', deptosFrecuentes, 'depto', null, deptosRestantes>0 ? ('+ '+deptosRestantes+' departamento(s) más con menor actividad en este período') : '') +
     '</div>'+
     (selectedStatKey ? statDetailTableHTML(movs15, selectedStatField, selectedStatKey) : '') +
