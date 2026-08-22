@@ -1162,6 +1162,7 @@ function tipoBarsHTML(porTipo){
 /* Promedio de vehículos presentes por día de la semana, calculado a partir de los ingresos/salidas
    reales de las últimas semanas (no de reglas fijas de turno), para detectar picos de ocupación. */
 var PICOS_SEMANAS = 8;
+var COMPENSACION_DIAS_MIN = 20;
 var PICOS_DIAS_NOMBRE = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 function picosAsistenciaPorDia(filterField, filterKey){
   var lookbackDias = PICOS_SEMANAS*7;
@@ -1329,14 +1330,15 @@ function renderDashboard(){
   state.vehiculos.forEach(function(v){ porTipo[v.tipo] = (porTipo[v.tipo]||0)+1; });
 
   var mesActual = hoy.slice(0,7);
-  var usoMes = {};
+  var usoMesDias = {};
   state.movimientos.filter(function(m){ return m.fechaIngreso.slice(0,7)===mesActual; }).forEach(function(m){
-    var v = vehiculoById(m.vehiculoId); if(!v) return;
+    var v = vehiculoById(m.vehiculoId); if(!v || v.tipo!=='bicicleta') return;
     var p = propietarioById(v.propietarioId); if(!p) return;
-    usoMes[p.id] = (usoMes[p.id]||0)+1;
+    if(!usoMesDias[p.id]) usoMesDias[p.id] = {};
+    usoMesDias[p.id][m.fechaIngreso] = true;
   });
-  var rankingMes = Object.keys(usoMes).map(function(pid){ return {p: propietarioById(pid), count: usoMes[pid]}; })
-    .filter(function(x){ return x.p; }).sort(function(a,b){ return b.count-a.count; }).slice(0,5);
+  var rankingMes = Object.keys(usoMesDias).map(function(pid){ return {p: propietarioById(pid), dias: Object.keys(usoMesDias[pid]).length}; })
+    .filter(function(x){ return x.p; }).sort(function(a,b){ return b.dias-a.dias; }).slice(0,8);
 
   var quinceISO = new Date(Date.now() - 15*86400000).toISOString().slice(0,10);
   var movs15 = state.movimientos.filter(function(m){ return m.fechaIngreso >= quinceISO; });
@@ -1404,12 +1406,17 @@ function renderDashboard(){
       '<div id="lookupResult"></div>'+
     '</div>'+
 
-    '<div class="section-head"><h2>Uso del mes por persona</h2><span class="hint">para el programa de compensación por uso frecuente</span></div>'+
+    '<div class="section-head"><h2>Programa de compensación (bicicleta)</h2><span class="hint">exclusivo para uso de bicicleta, mínimo '+COMPENSACION_DIAS_MIN+' días al mes</span></div>'+
     (rankingMes.length ? (
       '<div class="card" style="padding:12px 14px; margin-bottom:14px;"><div class="chip-list">'+
-        rankingMes.map(function(x,i){ return '<div class="chip"><b>'+(i+1)+'. '+x.count+'</b>'+esc(x.p.nombre)+'</div>'; }).join('') +
+        rankingMes.map(function(x,i){
+          var cumple = x.dias>=COMPENSACION_DIAS_MIN;
+          return '<div class="chip"><b>'+(i+1)+'. '+x.dias+' día(s)</b>'+esc(x.p.nombre)+'<br>'+
+            (cumple ? '<span class="pill pill-ok">Cumple</span>' : '<span class="pill pill-muted">Faltan '+(COMPENSACION_DIAS_MIN-x.dias)+'</span>') +
+          '</div>';
+        }).join('') +
       '</div></div>'
-    ) : '<div class="card" style="padding:12px 14px; margin-bottom:14px;"><div class="foot" style="color:var(--text-muted); font-size:12.5px;">Sin ingresos registrados este mes todavía.</div></div>')+
+    ) : '<div class="card" style="padding:12px 14px; margin-bottom:14px;"><div class="foot" style="color:var(--text-muted); font-size:12.5px;">Sin días de uso de bicicleta registrados este mes todavía.</div></div>')+
 
     '<div class="section-head"><h2>Cantidad de vehículos</h2><span class="hint">'+totalVeh+' registrado(s) en total</span></div>'+
     '<div class="card" style="padding:10px 16px;">'+
