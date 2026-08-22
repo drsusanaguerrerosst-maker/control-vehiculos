@@ -1346,13 +1346,29 @@ function renderDashboard(){
 
   var quinceISO = new Date(Date.now() - 15*86400000).toISOString().slice(0,10);
   var movs15 = state.movimientos.filter(function(m){ return m.fechaIngreso >= quinceISO; });
-  var tiposFrecuentes = freqListTipo(movs15);
-  var deptosFrecuentesAll = freqListDepto(movs15);
+
+  // Al elegir un departamento se filtran los tipos de vehículo a ese departamento (y viceversa),
+  // para que "Vehículo más usado" y "Departamentos" se crucen entre sí, igual que con los picos.
+  var movs15ParaTipo = movs15, movs15ParaDepto = movs15;
+  if(selectedStatField==='depto' && selectedStatKey){
+    movs15ParaTipo = movs15.filter(function(m){
+      var v = vehiculoById(m.vehiculoId); if(!v) return false;
+      var p = propietarioById(v.propietarioId);
+      return (p ? (tc(p.area)||'Sin área') : 'Sin área') === selectedStatKey;
+    });
+  } else if(selectedStatField==='tipo' && selectedStatKey){
+    movs15ParaDepto = movs15.filter(function(m){
+      var v = vehiculoById(m.vehiculoId); return v && v.tipo===selectedStatKey;
+    });
+  }
+  var tiposFrecuentes = freqListTipo(movs15ParaTipo);
+  var deptosFrecuentesAll = freqListDepto(movs15ParaDepto);
   var deptosFrecuentes = deptosFrecuentesAll.slice(0, 5);
   var deptosRestantes = deptosFrecuentesAll.length - deptosFrecuentes.length;
   var selectedStatLabel = '';
   if(selectedStatKey){
-    var foundStat = (selectedStatField==='tipo' ? tiposFrecuentes : deptosFrecuentes).find(function(x){ return x.key===selectedStatKey; });
+    var listaCompleta = selectedStatField==='tipo' ? freqListTipo(movs15) : freqListDepto(movs15);
+    var foundStat = listaCompleta.find(function(x){ return x.key===selectedStatKey; });
     selectedStatLabel = foundStat ? foundStat.name : selectedStatKey;
   }
 
