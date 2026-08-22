@@ -1133,14 +1133,19 @@ function tipoBarsHTML(porTipo){
    reales de las últimas semanas (no de reglas fijas de turno), para detectar picos de ocupación. */
 var PICOS_SEMANAS = 8;
 var PICOS_DIAS_NOMBRE = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-function picosAsistenciaPorDia(){
+function picosAsistenciaPorDia(filterField, filterKey){
   var lookbackDias = PICOS_SEMANAS*7;
   var sum = [0,0,0,0,0,0,0], cuenta = [0,0,0,0,0,0,0];
   for(var i=0;i<lookbackDias;i++){
     var d = new Date(Date.now() - i*86400000);
     var iso = d.toISOString().slice(0,10);
     var presentes = state.movimientos.filter(function(m){
-      return m.fechaIngreso<=iso && (!m.fechaSalida || m.fechaSalida>=iso);
+      if(m.fechaIngreso>iso || (m.fechaSalida && m.fechaSalida<iso)) return false;
+      if(!filterField) return true;
+      var v = vehiculoById(m.vehiculoId); if(!v) return false;
+      if(filterField==='tipo') return v.tipo===filterKey;
+      var p = propietarioById(v.propietarioId);
+      return (p ? (tc(p.area)||'Sin área') : 'Sin área') === filterKey;
     }).length;
     var dow = d.getDay();
     sum[dow] += presentes; cuenta[dow]++;
@@ -1307,8 +1312,6 @@ function renderDashboard(){
   var rankingMes = Object.keys(usoMes).map(function(pid){ return {p: propietarioById(pid), count: usoMes[pid]}; })
     .filter(function(x){ return x.p; }).sort(function(a,b){ return b.count-a.count; }).slice(0,5);
 
-  var picos = picosAsistenciaPorDia();
-
   var quinceISO = new Date(Date.now() - 15*86400000).toISOString().slice(0,10);
   var movs15 = state.movimientos.filter(function(m){ return m.fechaIngreso >= quinceISO; });
   var tiposFrecuentes = freqListTipo(movs15);
@@ -1321,6 +1324,8 @@ function renderDashboard(){
     selectedStatLabel = foundStat ? foundStat.name : selectedStatKey;
   }
 
+  var picos = picosAsistenciaPorDia(selectedStatField, selectedStatKey);
+
   el.innerHTML =
     '<div class="grid-kpi">'+
       kpiCard('Dentro ahora mismo', dentro.length, '') +
@@ -1329,10 +1334,10 @@ function renderDashboard(){
       kpiCard('Salidas anticipadas hoy', anticipadasHoy.length, '') +
     '</div>'+
 
-    '<div class="section-head"><h2>Picos de asistencia por día de la semana</h2><span class="hint">promedio de vehículos presentes · últimas '+PICOS_SEMANAS+' semanas</span></div>'+
+    '<div class="section-head"><h2>Picos de asistencia por día de la semana</h2><span class="hint">'+(selectedStatKey ? esc(selectedStatLabel)+' · últimas '+PICOS_SEMANAS+' semanas' : 'promedio de vehículos presentes · últimas '+PICOS_SEMANAS+' semanas')+'</span></div>'+
     '<div class="card" style="padding:10px 16px; margin-bottom:14px;">'+
       picosBarsHTML(picos) +
-      '<div class="foot" style="color:var(--text-muted); font-size:11px; margin-top:8px; padding-top:8px; border-top:1px solid var(--accent-bg);">Útil para anticipar cuándo el parqueadero puede desbordarse: se calcula de los ingresos y salidas reales registrados, no de un horario fijo asumido.</div>'+
+      '<div class="foot" style="color:var(--text-muted); font-size:11px; margin-top:8px; padding-top:8px; border-top:1px solid var(--accent-bg);">'+(selectedStatKey ? 'Filtrado por tu selección en "Vehículo más usado" / "Departamentos" más abajo — clic de nuevo ahí para quitar el filtro.' : 'Útil para anticipar cuándo el parqueadero puede desbordarse: se calcula de los ingresos y salidas reales registrados, no de un horario fijo asumido.')+'</div>'+
     '</div>'+
 
     '<div class="section-head"><h2>Tipos de vehículo y departamentos frecuentes</h2><span class="hint">mayor asistencia · últimos 15 días</span></div>'+
@@ -1367,9 +1372,9 @@ function renderDashboard(){
       }).join('') + '</tbody></table></div></div>'
     ) : '')+
 
-    '<div class="section-head"><h2>Consulta rápida</h2><span class="hint">busca por folio, nombre o documento</span></div>'+
+    '<div class="section-head"><h2>Consulta rápida</h2><span class="hint">busca por folio, placa, nombre o documento</span></div>'+
     '<div class="card" style="padding:12px 14px; margin-bottom:14px;">'+
-      '<input type="search" class="search" id="lookupQuery" placeholder="Folio (VEH-2026-0001), nombre del propietario o documento…" style="margin-bottom:10px;" />'+
+      '<input type="search" class="search" id="lookupQuery" placeholder="Folio, placa (motocicletas), nombre del propietario o documento…" style="margin-bottom:10px;" />'+
       '<div id="lookupResult"></div>'+
     '</div>'+
 
@@ -1408,6 +1413,7 @@ function renderDashboard(){
     if(!q){ lookupResult.innerHTML = ''; return; }
     var v = state.vehiculos.find(function(v){
       if(v.folio.toLowerCase().indexOf(q)>=0 || v.id.toLowerCase()===q) return true;
+      if(v.placa && v.placa.toLowerCase().indexOf(q)>=0) return true;
       var p = propietarioById(v.propietarioId);
       return p && (p.nombre.toLowerCase().indexOf(q)>=0 || p.documento.toLowerCase().indexOf(q)>=0);
     });
@@ -1433,7 +1439,7 @@ function renderLookupCard(v){
     '<div>'+
       '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;"><span class="code">'+esc(v.folio)+'</span>'+estadoPill(st)+'</div>'+
       '<div style="font-family:var(--font-display); font-size:18px; margin-bottom:4px;">'+esc(p?p.nombre:'Propietario no encontrado')+'</div>'+
-      '<div style="color:var(--text-muted); font-size:12.5px; margin-bottom:10px;">'+esc(TIPO_LABELS[v.tipo])+(p?' · '+esc(p.area)+' · '+esc(p.documento):'')+'</div>'+
+      '<div style="color:var(--text-muted); font-size:12.5px; margin-bottom:10px;">'+esc(TIPO_LABELS[v.tipo])+(v.placa?' · placa '+esc(v.placa):'')+(p?' · '+esc(p.area)+' · '+esc(p.documento):'')+'</div>'+
       (p ? '<div style="font-size:12.5px; margin-bottom:10px;">'+esc(p.celular||'—')+' · '+esc(p.correo||'—')+'</div>' : '')+
       (turno ? '<div style="font-size:12.5px; margin-bottom:4px;">Turno: '+esc(turno.nombre)+' ('+turno.horas+'h)'+(finEsperado?' · fin esperado: '+String(finEsperado.getHours()).padStart(2,'0')+':'+String(finEsperado.getMinutes()).padStart(2,'0'):'')+'</div>' : '')+
       (abierto ? '<div class="foot" style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px;">Ingresó: '+fmtDate(abierto.fechaIngreso)+' · '+abierto.horaIngreso+'</div>' : (ultimo ? '<div class="foot" style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px;">Última salida: '+fmtDate(ultimo.fechaSalida)+' · '+(ultimo.horaSalida||'')+'</div>' : ''))+
@@ -1502,6 +1508,8 @@ function renderRegistrar(){
       '<div class="field"><label for="f-tipo">Tipo de vehículo</label><select id="f-tipo">'+
         Object.keys(TIPO_LABELS).map(function(k){ return '<option value="'+k+'">'+TIPO_LABELS[k]+'</option>'; }).join('') +
       '</select></div>'+
+      '<div id="wrapPlaca" style="display:none;">'+field('Placa','placa','text','','placeholder="ABC123"')+
+        '<div class="foot" style="color:var(--text-muted); font-size:11.5px; margin-top:-8px; margin-bottom:12px;">Respaldo de identificación además del QR — útil si el adhesivo se daña o se pierde.</div></div>'+
       '<div class="field"><label>Foto del vehículo</label><input type="file" id="f-fotoVeh" accept="image/*" capture="environment" />'+
         '<div id="previewVeh" style="margin-top:8px; max-width:140px;"></div></div>'+
 
@@ -1555,6 +1563,11 @@ function renderRegistrar(){
     var file = ev.target.files[0]; if(!file) return;
     fileToDataUrlCompressed(file, 400, function(dataUrl){ regFotoVeh = dataUrl; document.getElementById('previewVeh').innerHTML = '<img src="'+dataUrl+'" style="width:100%; border-radius:8px;" />'; });
   });
+  var fTipo = document.getElementById('f-tipo');
+  var wrapPlaca = document.getElementById('wrapPlaca');
+  function actualizarWrapPlaca(){ wrapPlaca.style.display = (fTipo.value==='motocicleta') ? '' : 'none'; }
+  fTipo.addEventListener('change', actualizarWrapPlaca);
+  actualizarWrapPlaca();
 
   document.getElementById('btnGuardarVeh').addEventListener('click', function(){
     var documento = tc(document.getElementById('f-documento').value);
@@ -1571,7 +1584,9 @@ function renderRegistrar(){
       state.propietarios.push(p);
     }
     saveProp();
-    var v = { id: uid(), folio: nextFolio(), tipo: document.getElementById('f-tipo').value, propietarioId: p.id, fotoVehiculo: regFotoVeh };
+    var tipoSel = document.getElementById('f-tipo').value;
+    var placa = tipoSel==='motocicleta' ? tc(document.getElementById('f-placa').value).toUpperCase() : '';
+    var v = { id: uid(), folio: nextFolio(), tipo: tipoSel, propietarioId: p.id, fotoVehiculo: regFotoVeh, placa: placa };
     state.vehiculos.push(v);
     saveVeh();
     mostrarQR(v);
@@ -1580,7 +1595,7 @@ function renderRegistrar(){
 function mostrarQR(v){
   var root = document.getElementById('qrResultado');
   root.innerHTML = '<div class="card" style="padding:22px 24px; max-width:720px; margin-top:16px; text-align:center;">'+
-    '<h3 style="font-size:15px; margin-bottom:10px;">Vehículo registrado: <span class="code">'+esc(v.folio)+'</span></h3>'+
+    '<h3 style="font-size:15px; margin-bottom:10px;">Vehículo registrado: <span class="code">'+esc(v.folio)+'</span>'+(v.placa?' · <span class="code">'+esc(v.placa)+'</span>':'')+'</h3>'+
     '<p style="color:var(--text-muted); font-size:13px; margin-bottom:14px;">Descarga este código QR, imprímelo y pégalo en el vehículo. La app móvil lo leerá para registrar ingresos y salidas.</p>'+
     '<div id="qrCanvasHolder" style="display:inline-block; padding:12px; background:#fff; border-radius:8px;"></div>'+
     '<div style="margin-top:14px;"><button class="btn btn-primary" id="btnDescargarQR">⇩ Descargar QR</button> <button class="btn" id="btnOtroVeh">Registrar otro</button></div>'+
@@ -1787,7 +1802,7 @@ function renderDirectorio(){
       return '<tr><td>'+esc(p.nombre)+'</td><td>'+esc(p.documento)+'</td><td>'+esc(p.area||'—')+'</td><td>'+esc(p.celular||'—')+'</td><td>'+esc(p.correo||'—')+'</td>'+
         '<td>'+(turno?esc(turno.nombre)+' ('+turno.horas+'h)':'—')+'</td>'+
         '<td>'+vehs.map(function(v){
-          return '<span class="code" style="margin-right:2px;">'+esc(v.folio)+'</span>'+
+          return '<span class="code" style="margin-right:2px;">'+esc(v.folio)+(v.placa?' · '+esc(v.placa):'')+'</span>'+
             '<button class="btn btn-sm btn-ghost" data-ver-qr="'+v.id+'" title="Ver código QR" style="padding:2px 6px; margin-right:8px;">▦ QR</button>';
         }).join('')+'</td>'+
         '<td style="white-space:nowrap;"><button class="btn btn-sm" data-credencial="'+p.id+'">🪪 Credencial</button> '+(isAdmin() ? '<button class="btn btn-sm btn-ghost" data-del-prop="'+p.id+'" style="color:var(--danger);">Eliminar</button>' : '')+'</td></tr>';
@@ -1853,7 +1868,7 @@ function openVehiculoQrModal(v){
   var root = document.getElementById('modalRoot');
   root.innerHTML =
     '<div class="overlay" id="ov"><div class="modal" style="max-width:340px; text-align:center;">'+
-      '<h3 style="margin-bottom:4px;">Código QR: <span class="code">'+esc(v.folio)+'</span></h3>'+
+      '<h3 style="margin-bottom:4px;">Código QR: <span class="code">'+esc(v.folio)+'</span>'+(v.placa?' <span class="code">'+esc(v.placa)+'</span>':'')+'</h3>'+
       '<div class="foot" style="color:var(--text-muted); font-size:12.5px; margin-bottom:14px;">'+esc(TIPO_LABELS[v.tipo])+(p?' · '+esc(p.nombre):'')+'</div>'+
       '<div id="dirQrHolder" style="display:inline-block; padding:12px; background:#fff; border:1px solid var(--border); border-radius:10px;"></div>'+
       '<div class="modal-actions" style="justify-content:center;">'+

@@ -10412,7 +10412,7 @@ function renderHome(){
           alertas.map(function(v){ var p=propietarioById(v.propietarioId); return '<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-top:1px solid var(--border);"><span>'+esc(p?p.nombre:v.folio)+'</span>'+estadoPill(estadoVehiculo(v))+'</div>'; }).join('') +
         '</div>'
       ) : '')+
-      '<div class="field"><input type="search" id="q" placeholder="Buscar por folio, nombre o documento…" value="'+esc(listQuery)+'" /></div>'+
+      '<div class="field"><input type="search" id="q" placeholder="Buscar por folio, placa, nombre o documento…" value="'+esc(listQuery)+'" /></div>'+
       '<div id="listaVeh"></div>'+
     '</div>';
   document.getElementById('btnEscanear').addEventListener('click', function(){ screen='scan'; route(); });
@@ -10423,7 +10423,7 @@ function renderHome(){
     var rows = vehiculos.filter(function(v){
       if(!q) return true;
       var p = propietarioById(v.propietarioId);
-      var hay = v.folio+' '+(p?p.nombre+' '+p.documento:'');
+      var hay = v.folio+' '+(v.placa||'')+' '+(p?p.nombre+' '+p.documento:'');
       return hay.toLowerCase().indexOf(q)>=0;
     });
     var wrap = document.getElementById('listaVeh');
@@ -10432,7 +10432,7 @@ function renderHome(){
       var p = propietarioById(v.propietarioId);
       return '<div class="veh-row" data-open="'+v.id+'" style="margin-bottom:10px;">'+
         '<div class="top"><span class="name">'+esc(p?p.nombre:v.folio)+'</span>'+estadoPill(estadoVehiculo(v))+'</div>'+
-        '<div class="meta"><span class="code">'+esc(v.folio)+'</span><span>'+esc(TIPO_LABELS[v.tipo])+'</span></div>'+
+        '<div class="meta"><span class="code">'+esc(v.folio)+'</span>'+(v.placa?'<span class="code">'+esc(v.placa)+'</span>':'')+'<span>'+esc(TIPO_LABELS[v.tipo])+'</span></div>'+
       '</div>';
     }).join('');
     wrap.querySelectorAll('[data-open]').forEach(function(el){ el.addEventListener('click', function(){ detailVehId = el.dataset.open; screen='detail'; route(); }); });
@@ -10518,6 +10518,7 @@ function renderDetail(){
           '<div style="font-family:var(--font-display); font-size:19px; margin-top:8px;">'+esc(p?p.nombre:'Propietario no encontrado')+'</div>'+
           '<div class="rows">'+
             row('Tipo', TIPO_LABELS[v.tipo]) +
+            (v.placa ? row('Placa', v.placa) : '') +
             (p ? row('Documento', p.documento) + row('Área', p.area||'—') + row('Celular', p.celular||'—') : '') +
             (turno ? row('Turno', turno.nombre+' ('+turno.horas+'h)') : '') +
             (abierto ? row('Ingresó', fmtDate(abierto.fechaIngreso)+' · '+abierto.horaIngreso) : '') +
