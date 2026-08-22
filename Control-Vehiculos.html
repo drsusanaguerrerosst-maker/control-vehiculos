@@ -892,8 +892,8 @@ function nowHM(){ var d=new Date(); return String(d.getHours()).padStart(2,'0')+
 function fmtDate(iso){ if(!iso) return '—'; var p=iso.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
 function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 function tc(s){ return (s||'').trim(); }
-var TIPO_LABELS = { bicicleta:'Bicicleta', patineta:'Patineta eléctrica', moto:'Moto eléctrica' };
-var TIPO_ICONS = { bicicleta:'🚲', patineta:'🛴', moto:'🏍️' };
+var TIPO_LABELS = { bicicleta:'Bicicleta', patineta:'Patineta eléctrica', moto:'Moto eléctrica', motocicleta:'Motocicleta' };
+var TIPO_ICONS = { bicicleta:'🚲', patineta:'🛴', moto:'🛵', motocicleta:'🏍️' };
 
 function propietarioById(id){ return state.propietarios.find(function(p){ return p.id===id; }) || null; }
 function vehiculoById(id){ return state.vehiculos.find(function(v){ return v.id===id; }) || null; }
@@ -1113,7 +1113,7 @@ function kpiCard(label, value, foot){
   return '<div class="card kpi"><div class="label">'+label+'</div><div class="value tabular">'+value+'</div>'+(foot?'<div class="foot">'+foot+'</div>':'')+'</div>';
 }
 function tipoBarsHTML(porTipo){
-  var max = Math.max(1, porTipo.bicicleta||0, porTipo.patineta||0, porTipo.moto||0);
+  var max = Object.keys(TIPO_LABELS).reduce(function(m,t){ return Math.max(m, porTipo[t]||0); }, 1);
   return Object.keys(TIPO_LABELS).map(function(t){
     var c = porTipo[t]||0;
     var pct = Math.round((c/max)*100);
@@ -1379,7 +1379,7 @@ function renderRegistrar(){
     '<div class="section-head"><h2>Carga masiva de vehículos (CSV)</h2><span class="hint">para cuando ya tienes la base de datos en una hoja de cálculo</span></div>'+
     '<div class="card" style="padding:22px 24px; max-width:720px;">'+
       '<p style="color:var(--text-muted); font-size:13px; margin:0 0 14px;">Reconoce encabezados en español con variaciones comunes (nombre/propietario, cedula/documento, celular/telefono, etc.). '+
-      'Tipos válidos: <span class="code">bicicleta</span>, <span class="code">patineta</span>, <span class="code">moto</span>. Si una fila coincide en documento y tipo con un vehículo ya '+
+      'Tipos válidos: <span class="code">bicicleta</span>, <span class="code">patineta</span>, <span class="code">moto</span>, <span class="code">motocicleta</span>. Si una fila coincide en documento y tipo con un vehículo ya '+
       'registrado, se actualiza en vez de duplicarse. Las fotos no se cargan por CSV.</p>'+
       '<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:6px;">'+
         '<button class="btn" id="btnPlantillaCSV">⇩ Descargar plantilla CSV</button>'+
@@ -1389,7 +1389,7 @@ function renderRegistrar(){
     '</div>';
 
   document.getElementById('btnPlantillaCSV').addEventListener('click', function(){
-    var contenido = 'documento,nombre,area,celular,correo,tipo\n1020304050,Juan Pérez,Logística,3011234567,juan.perez@empresa.com,bicicleta\n1030405060,María Gómez,Contabilidad,3027654321,maria.gomez@empresa.com,patineta\n';
+    var contenido = 'documento,nombre,area,celular,correo,tipo\n1020304050,Juan Pérez,Logística,3011234567,juan.perez@empresa.com,bicicleta\n1030405060,María Gómez,Contabilidad,3027654321,maria.gomez@empresa.com,patineta\n1040506070,Carlos Ruiz,Mantenimiento,3037654321,carlos.ruiz@empresa.com,motocicleta\n';
     downloadFile('plantilla_vehiculos.csv', 'text/csv', '﻿'+contenido);
   });
   document.getElementById('f-csvFile').addEventListener('change', function(ev){
@@ -1477,7 +1477,8 @@ var CSV_ALIASES = {
 var CSV_TIPO_ALIASES = {
   bicicleta:'bicicleta', bici:'bicicleta', bicicleta_electrica:'bicicleta',
   patineta:'patineta', patineta_electrica:'patineta', scooter:'patineta', monopatin:'patineta',
-  moto:'moto', moto_electrica:'moto', motoelectrica:'moto'
+  moto:'moto', moto_electrica:'moto', motoelectrica:'moto',
+  motocicleta:'motocicleta', moto_gasolina:'motocicleta', motocicleta_gasolina:'motocicleta', moto_combustion:'motocicleta'
 };
 function normalizarTextoCSV(s){
   s = (s==null?'':String(s)).trim().toLowerCase();

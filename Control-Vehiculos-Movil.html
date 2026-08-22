@@ -10267,7 +10267,7 @@ function tc(s){ return (s||'').trim(); }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function nowHM(){ var d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function fmtDate(iso){ if(!iso) return '—'; var p=iso.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
-var TIPO_LABELS = { bicicleta:'Bicicleta', patineta:'Patineta eléctrica', moto:'Moto eléctrica' };
+var TIPO_LABELS = { bicicleta:'Bicicleta', patineta:'Patineta eléctrica', moto:'Moto eléctrica', motocicleta:'Motocicleta' };
 
 var propietarios = lsGet(LS_PROP, []);
 var vehiculos = lsGet(LS_VEH, []);
