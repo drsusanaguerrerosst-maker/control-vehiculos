@@ -27,7 +27,7 @@ button{font-family:inherit;}
 a{color:inherit;}
 
 .shell{display:flex; flex-direction:column; min-height:100vh;}
-.rail{ width:100%; background:var(--bg); display:flex; padding:16px 22px; position:sticky; top:0; z-index:6; }
+.rail{ width:100%; background:var(--bg); display:flex; padding:16px 28px; max-width:1180px; margin:0 auto; position:sticky; top:0; z-index:6; }
 .rail-box{ width:100%; background:#fff; border:1px solid var(--accent-bg); border-radius:18px; box-shadow:var(--shadow); display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; padding:12px 18px; gap:8px 10px; }
 .brand{background:var(--accent); color:#fff; padding:7px 14px 7px 7px; border-radius:12px; display:flex; align-items:center; gap:11px; margin-right:6px;}
 .nav-rows{display:flex; flex-direction:column; gap:8px; flex:1; min-width:0;}
@@ -166,9 +166,9 @@ tbody tr:hover{background:var(--surface-2);}
 .credencial .datos{ display:flex; flex-direction:column; gap:4px; margin-bottom:20px; font-size:12.5px; color:var(--text-muted); }
 .credencial .qrbox{ display:inline-block; padding:12px; background:#fff; border:1px solid var(--border); border-radius:10px; margin-bottom:6px; }
 
-@media (max-width:1180px) and (min-width:861px){ .content{padding:20px 16px 60px; max-width:100%;} }
+@media (max-width:1180px) and (min-width:861px){ .content{padding:20px 16px 60px; max-width:100%;} .rail{padding:16px 16px; max-width:100%;} }
 @media (max-width:860px){
-  .rail{padding:10px 12px;}
+  .rail{padding:10px 18px; max-width:100%;}
   .brand .sub{display:none;}
   .grid-kpi{grid-template-columns:1fr 1fr;}
   .row2,.row3{grid-template-columns:1fr;}
