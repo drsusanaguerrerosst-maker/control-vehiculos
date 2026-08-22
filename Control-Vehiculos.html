@@ -1166,6 +1166,53 @@ function playAlertSound(){
 
 /* ================= DASHBOARD ================= */
 var alertedKeys = {};
+var selectedStatField = null, selectedStatKey = null;
+function freqListTipo(movs){
+  var m = {};
+  movs.forEach(function(mv){
+    var v = vehiculoById(mv.vehiculoId); if(!v) return;
+    var t = v.tipo;
+    if(!m[t]) m[t] = {count:0, last:null};
+    m[t].count++; if(!m[t].last || mv.fechaIngreso>m[t].last) m[t].last = mv.fechaIngreso;
+  });
+  return Object.keys(m).map(function(k){ return {key:k, name:TIPO_LABELS[k]||k, count:m[k].count, last:m[k].last}; })
+    .sort(function(a,b){ return b.count-a.count; });
+}
+function freqListDepto(movs){
+  var m = {};
+  movs.forEach(function(mv){
+    var v = vehiculoById(mv.vehiculoId); if(!v) return;
+    var p = propietarioById(v.propietarioId); if(!p) return;
+    var d = tc(p.area) || 'Sin área';
+    if(!m[d]) m[d] = {count:0, last:null};
+    m[d].count++; if(!m[d].last || mv.fechaIngreso>m[d].last) m[d].last = mv.fechaIngreso;
+  });
+  return Object.keys(m).map(function(k){ return {key:k, name:k, count:m[k].count, last:m[k].last}; })
+    .sort(function(a,b){ return b.count-a.count; });
+}
+function freqCardVeh(title, list, field){
+  if(!list.length) return '<div class="card" style="padding:12px 14px;"><h3 style="font-size:14px; margin-bottom:8px;">'+title+'</h3><div class="foot" style="color:var(--text-muted); font-size:12.5px;">Sin datos suficientes en los últimos 15 días.</div></div>';
+  return '<div class="card" style="padding:12px 14px;"><h3 style="font-size:14px; margin-bottom:8px;">'+title+' <span class="hint" style="font-weight:400; text-transform:none; letter-spacing:0;">clic para ver el detalle</span></h3><div class="chip-list">'+
+    list.map(function(x){
+      var sel = selectedStatField===field && selectedStatKey===x.key;
+      return '<div class="chip chip-click'+(sel?' chip-selected':'')+'" data-key="'+esc(x.key)+'" data-field="'+field+'"><b>'+x.count+'</b>'+esc(x.name)+'<br><span style="color:var(--text-muted)">últ. '+fmtDate(x.last)+'</span></div>';
+    }).join('') +
+  '</div></div>';
+}
+function statDetailTableHTML(movs, field, key){
+  var rows = movs.filter(function(mv){
+    var v = vehiculoById(mv.vehiculoId); if(!v) return false;
+    if(field==='tipo') return v.tipo===key;
+    var p = propietarioById(v.propietarioId);
+    return (p ? (tc(p.area)||'Sin área') : 'Sin área') === key;
+  }).sort(function(a,b){ return (b.fechaIngreso+b.horaIngreso).localeCompare(a.fechaIngreso+a.horaIngreso); });
+  if(!rows.length) return '<div class="card" style="padding:12px 14px; margin-top:10px;"><div class="foot" style="color:var(--text-muted); font-size:12.5px;">Sin ingresos para este filtro en los últimos 15 días.</div></div>';
+  return '<div class="tablewrap" style="margin-top:10px;"><table><thead><tr><th>Folio</th><th>Tipo</th><th>Propietario</th><th>Área</th><th>Ingresó</th></tr></thead><tbody>'+
+    rows.map(function(mv){
+      var v = vehiculoById(mv.vehiculoId); var p = v?propietarioById(v.propietarioId):null;
+      return '<tr><td><span class="code">'+esc(v?v.folio:'—')+'</span></td><td>'+esc(v?(TIPO_LABELS[v.tipo]||v.tipo):'—')+'</td><td>'+esc(p?p.nombre:'—')+'</td><td>'+esc(p?(p.area||'—'):'—')+'</td><td class="tabular">'+fmtDate(mv.fechaIngreso)+' '+mv.horaIngreso+'</td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
 function checkAlertsGlobal(){
   var nuevas = false;
   state.vehiculos.forEach(function(v){
@@ -1211,6 +1258,16 @@ function renderDashboard(){
   var rankingMes = Object.keys(usoMes).map(function(pid){ return {p: propietarioById(pid), count: usoMes[pid]}; })
     .filter(function(x){ return x.p; }).sort(function(a,b){ return b.count-a.count; }).slice(0,5);
 
+  var quinceISO = new Date(Date.now() - 15*86400000).toISOString().slice(0,10);
+  var movs15 = state.movimientos.filter(function(m){ return m.fechaIngreso >= quinceISO; });
+  var tiposFrecuentes = freqListTipo(movs15);
+  var deptosFrecuentes = freqListDepto(movs15);
+  var selectedStatLabel = '';
+  if(selectedStatKey){
+    var foundStat = (selectedStatField==='tipo' ? tiposFrecuentes : deptosFrecuentes).find(function(x){ return x.key===selectedStatKey; });
+    selectedStatLabel = foundStat ? foundStat.name : selectedStatKey;
+  }
+
   el.innerHTML =
     '<div class="grid-kpi">'+
       kpiCard('Dentro ahora mismo', dentro.length, '') +
@@ -1223,6 +1280,15 @@ function renderDashboard(){
     '<div class="card" style="padding:10px 16px; margin-bottom:14px;">'+
       tipoBarsHTML(porTipo) +
     '</div>'+
+
+    '<div class="section-head"><h2>Tipos de vehículo y departamentos frecuentes</h2><span class="hint">mayor asistencia · últimos 15 días</span></div>'+
+    (selectedStatKey ? '<div class="banner ok" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Mostrando ingresos de <b>'+esc(selectedStatLabel)+'</b> en los últimos 15 días.</span><a href="#" id="quitarStatFiltro" style="color:inherit; text-decoration:underline; white-space:nowrap;">✕ Quitar filtro</a></div>' : '')+
+    '<div class="row2">'+
+      freqCardVeh('Tipos de vehículo más frecuentes', tiposFrecuentes, 'tipo') +
+      freqCardVeh('Departamentos con mayor asistencia', deptosFrecuentes, 'depto') +
+    '</div>'+
+    (selectedStatKey ? statDetailTableHTML(movs15, selectedStatField, selectedStatKey) : '') +
+    '<div style="margin-bottom:14px;"></div>'+
 
     (alertas.length ? (
       '<div class="section-head"><h2>Alertas activas</h2><span class="hint">se avisa con sonido mientras esta pestaña esté abierta</span></div>'+
@@ -1263,6 +1329,17 @@ function renderDashboard(){
   document.querySelectorAll('[data-salida]').forEach(function(btn){
     btn.addEventListener('click', function(){ registrarSalida(btn.dataset.salida); rerender(); });
   });
+
+  document.querySelectorAll('.chip-click[data-field]').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var key = chip.dataset.key, field = chip.dataset.field;
+      if(selectedStatKey===key && selectedStatField===field){ selectedStatKey=null; selectedStatField=null; }
+      else { selectedStatKey=key; selectedStatField=field; }
+      renderDashboard();
+    });
+  });
+  var quitarStatFiltro = document.getElementById('quitarStatFiltro');
+  if(quitarStatFiltro) quitarStatFiltro.addEventListener('click', function(ev){ ev.preventDefault(); selectedStatKey=null; selectedStatField=null; renderDashboard(); });
 
   var lookupInput = document.getElementById('lookupQuery');
   var lookupResult = document.getElementById('lookupResult');
