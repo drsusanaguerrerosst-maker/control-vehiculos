@@ -68,6 +68,11 @@ a{color:inherit;}
 .typebar-track{background:var(--field-bg); border-radius:99px; height:9px; overflow:hidden;}
 .typebar-fill{background:var(--accent); height:100%; border-radius:99px; transition:width .35s ease;}
 .typebar-count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-weight:700; text-align:right; color:var(--accent-ink);}
+.freqbar-row{display:grid; grid-template-columns:1fr 1fr 30px; align-items:center; gap:10px; padding:7px 6px; border-radius:8px; cursor:pointer; transition:background .12s ease;}
+.freqbar-row:hover{background:var(--surface-2);}
+.freqbar-row.freqbar-selected{background:var(--accent-bg);}
+.freqbar-row.freqbar-selected .typebar-fill{background:var(--accent-ink);}
+.freqbar-meta{font-size:10px; color:var(--text-muted); font-weight:400;}
 .kpi{padding:7px 9px;}
 .card.kpi, .card-muted{background:var(--field-bg);}
 .kpi .label{font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted);}
@@ -1190,14 +1195,24 @@ function freqListDepto(movs){
   return Object.keys(m).map(function(k){ return {key:k, name:k, count:m[k].count, last:m[k].last}; })
     .sort(function(a,b){ return b.count-a.count; });
 }
-function freqCardVeh(title, list, field){
+function freqBarsHTML(list, field, iconMap){
+  var max = list.reduce(function(m,x){ return Math.max(m,x.count); }, 1);
+  return list.map(function(x){
+    var pct = Math.round((x.count/max)*100);
+    var sel = selectedStatField===field && selectedStatKey===x.key;
+    var icon = iconMap ? (iconMap[x.key]||'') : '';
+    return '<div class="freqbar-row'+(sel?' freqbar-selected':'')+'" data-key="'+esc(x.key)+'" data-field="'+field+'">'+
+      '<div class="typebar-label">'+(icon?'<span class="typebar-icon">'+icon+'</span>':'')+'<span>'+esc(x.name)+'<span class="freqbar-meta"> · últ. '+fmtDate(x.last)+'</span></span></div>'+
+      '<div class="typebar-track"><div class="typebar-fill" style="width:'+pct+'%;"></div></div>'+
+      '<div class="typebar-count">'+x.count+'</div>'+
+    '</div>';
+  }).join('');
+}
+function freqCardVeh(title, list, field, iconMap){
   if(!list.length) return '<div class="card" style="padding:12px 14px;"><h3 style="font-size:14px; margin-bottom:8px;">'+title+'</h3><div class="foot" style="color:var(--text-muted); font-size:12.5px;">Sin datos suficientes en los últimos 15 días.</div></div>';
-  return '<div class="card" style="padding:12px 14px;"><h3 style="font-size:14px; margin-bottom:8px;">'+title+' <span class="hint" style="font-weight:400; text-transform:none; letter-spacing:0;">clic para ver el detalle</span></h3><div class="chip-list">'+
-    list.map(function(x){
-      var sel = selectedStatField===field && selectedStatKey===x.key;
-      return '<div class="chip chip-click'+(sel?' chip-selected':'')+'" data-key="'+esc(x.key)+'" data-field="'+field+'"><b>'+x.count+'</b>'+esc(x.name)+'<br><span style="color:var(--text-muted)">últ. '+fmtDate(x.last)+'</span></div>';
-    }).join('') +
-  '</div></div>';
+  return '<div class="card" style="padding:12px 14px;"><h3 style="font-size:14px; margin-bottom:8px;">'+title+' <span class="hint" style="font-weight:400; text-transform:none; letter-spacing:0;">clic para ver el detalle</span></h3>'+
+    freqBarsHTML(list, field, iconMap) +
+  '</div>';
 }
 function statDetailTableHTML(movs, field, key){
   var rows = movs.filter(function(mv){
@@ -1284,8 +1299,8 @@ function renderDashboard(){
     '<div class="section-head"><h2>Tipos de vehículo y departamentos frecuentes</h2><span class="hint">mayor asistencia · últimos 15 días</span></div>'+
     (selectedStatKey ? '<div class="banner ok" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Mostrando ingresos de <b>'+esc(selectedStatLabel)+'</b> en los últimos 15 días.</span><a href="#" id="quitarStatFiltro" style="color:inherit; text-decoration:underline; white-space:nowrap;">✕ Quitar filtro</a></div>' : '')+
     '<div class="row2">'+
-      freqCardVeh('Tipos de vehículo más frecuentes', tiposFrecuentes, 'tipo') +
-      freqCardVeh('Departamentos con mayor asistencia', deptosFrecuentes, 'depto') +
+      freqCardVeh('Tipos de vehículo más frecuentes', tiposFrecuentes, 'tipo', TIPO_ICONS) +
+      freqCardVeh('Departamentos con mayor asistencia', deptosFrecuentes, 'depto', null) +
     '</div>'+
     (selectedStatKey ? statDetailTableHTML(movs15, selectedStatField, selectedStatKey) : '') +
     '<div style="margin-bottom:14px;"></div>'+
@@ -1330,7 +1345,7 @@ function renderDashboard(){
     btn.addEventListener('click', function(){ registrarSalida(btn.dataset.salida); rerender(); });
   });
 
-  document.querySelectorAll('.chip-click[data-field]').forEach(function(chip){
+  document.querySelectorAll('.freqbar-row[data-field]').forEach(function(chip){
     chip.addEventListener('click', function(){
       var key = chip.dataset.key, field = chip.dataset.field;
       if(selectedStatKey===key && selectedStatField===field){ selectedStatKey=null; selectedStatField=null; }
