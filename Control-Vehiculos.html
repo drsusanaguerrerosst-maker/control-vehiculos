@@ -1208,10 +1208,11 @@ function freqBarsHTML(list, field, iconMap){
     '</div>';
   }).join('');
 }
-function freqCardVeh(title, list, field, iconMap){
+function freqCardVeh(title, list, field, iconMap, extraNote){
   if(!list.length) return '<div class="card" style="padding:12px 14px;"><h3 style="font-size:14px; margin-bottom:8px;">'+title+'</h3><div class="foot" style="color:var(--text-muted); font-size:12.5px;">Sin datos suficientes en los últimos 15 días.</div></div>';
   return '<div class="card" style="padding:12px 14px;"><h3 style="font-size:14px; margin-bottom:8px;">'+title+' <span class="hint" style="font-weight:400; text-transform:none; letter-spacing:0;">clic para ver el detalle</span></h3>'+
     freqBarsHTML(list, field, iconMap) +
+    (extraNote ? '<div class="foot" style="color:var(--text-muted); font-size:11.5px; margin-top:8px; padding-top:8px; border-top:1px solid var(--accent-bg);">'+esc(extraNote)+'</div>' : '') +
   '</div>';
 }
 function statDetailTableHTML(movs, field, key){
@@ -1276,7 +1277,9 @@ function renderDashboard(){
   var quinceISO = new Date(Date.now() - 15*86400000).toISOString().slice(0,10);
   var movs15 = state.movimientos.filter(function(m){ return m.fechaIngreso >= quinceISO; });
   var tiposFrecuentes = freqListTipo(movs15);
-  var deptosFrecuentes = freqListDepto(movs15);
+  var deptosFrecuentesAll = freqListDepto(movs15);
+  var deptosFrecuentes = deptosFrecuentesAll.slice(0, 5);
+  var deptosRestantes = deptosFrecuentesAll.length - deptosFrecuentes.length;
   var selectedStatLabel = '';
   if(selectedStatKey){
     var foundStat = (selectedStatField==='tipo' ? tiposFrecuentes : deptosFrecuentes).find(function(x){ return x.key===selectedStatKey; });
@@ -1300,7 +1303,7 @@ function renderDashboard(){
     (selectedStatKey ? '<div class="banner ok" style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Mostrando ingresos de <b>'+esc(selectedStatLabel)+'</b> en los últimos 15 días.</span><a href="#" id="quitarStatFiltro" style="color:inherit; text-decoration:underline; white-space:nowrap;">✕ Quitar filtro</a></div>' : '')+
     '<div class="row2">'+
       freqCardVeh('Tipos de vehículo más frecuentes', tiposFrecuentes, 'tipo', TIPO_ICONS) +
-      freqCardVeh('Departamentos con mayor asistencia', deptosFrecuentes, 'depto', null) +
+      freqCardVeh('Departamentos con mayor asistencia (top 5)', deptosFrecuentes, 'depto', null, deptosRestantes>0 ? ('+ '+deptosRestantes+' departamento(s) más con menor actividad en este período') : '') +
     '</div>'+
     (selectedStatKey ? statDetailTableHTML(movs15, selectedStatField, selectedStatKey) : '') +
     '<div style="margin-bottom:14px;"></div>'+
