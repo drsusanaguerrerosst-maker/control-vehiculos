@@ -1213,7 +1213,6 @@ function renderDashboard(){
 
   el.innerHTML =
     '<div class="grid-kpi">'+
-      kpiCard('Vehículos registrados', totalVeh, Object.keys(porTipo).map(function(t){return TIPO_LABELS[t]+': '+porTipo[t];}).join(' · ')) +
       kpiCard('Dentro ahora mismo', dentro.length, '') +
       kpiCard('Alertas activas', alertas.length, alertas.length ? 'permanencia o abandono' : 'todo en orden') +
       kpiCard('Ingresos hoy', ingresosHoy, '') +
