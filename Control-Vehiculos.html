@@ -60,19 +60,19 @@ a{color:inherit;}
 .btn:disabled{opacity:.45; cursor:not-allowed;}
 
 .card{background:var(--surface); border:1px solid var(--accent-bg); border-radius:var(--radius); box-shadow:var(--shadow);}
-.grid-kpi{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:22px;}
-.typebar-row{display:grid; grid-template-columns:180px 1fr 34px; align-items:center; gap:14px; padding:8px 0;}
+.grid-kpi{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:14px;}
+.typebar-row{display:grid; grid-template-columns:160px 1fr 30px; align-items:center; gap:10px; padding:5px 0;}
 .typebar-row + .typebar-row{border-top:1px solid var(--accent-bg);}
-.typebar-label{display:flex; align-items:center; gap:9px; font-size:13.5px; color:var(--text);}
-.typebar-icon{font-size:19px; line-height:1;}
-.typebar-track{background:var(--field-bg); border-radius:99px; height:11px; overflow:hidden;}
+.typebar-label{display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--text);}
+.typebar-icon{font-size:16px; line-height:1;}
+.typebar-track{background:var(--field-bg); border-radius:99px; height:9px; overflow:hidden;}
 .typebar-fill{background:var(--accent); height:100%; border-radius:99px; transition:width .35s ease;}
 .typebar-count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-weight:700; text-align:right; color:var(--accent-ink);}
-.kpi{padding:9px 11px;}
+.kpi{padding:7px 9px;}
 .card.kpi, .card-muted{background:var(--field-bg);}
-.kpi .label{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted);}
-.kpi .value{font-family:var(--font-display); font-size:19px; margin-top:3px;}
-.kpi .foot{font-size:10.5px; color:var(--text-muted); margin-top:2px;}
+.kpi .label{font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted);}
+.kpi .value{font-family:var(--font-display); font-size:16px; margin-top:1px;}
+.kpi .foot{font-size:9.5px; color:var(--text-muted); margin-top:1px;}
 
 .pill{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:99px; font-size:11.5px; font-weight:600; letter-spacing:.02em;}
 .pill::before{content:""; width:6px; height:6px; border-radius:99px; background:currentColor;}
@@ -101,7 +101,7 @@ tbody tr:hover{background:var(--surface-2);}
 .empty{padding:48px 24px; text-align:center; color:var(--text-muted);}
 .empty h3{color:var(--text); font-size:18px; margin-bottom:6px;}
 
-.section-head{display:flex; align-items:baseline; justify-content:space-between; margin:28px 0 12px; flex-wrap:wrap; gap:8px;}
+.section-head{display:flex; align-items:baseline; justify-content:space-between; margin:18px 0 8px; flex-wrap:wrap; gap:8px;}
 .section-head:first-child{margin-top:0;}
 .section-head h2{font-size:16px;}
 .section-head .hint{font-size:12px; color:var(--text-muted);}
@@ -1220,13 +1220,13 @@ function renderDashboard(){
     '</div>'+
 
     '<div class="section-head"><h2>Vehículos por tipo</h2><span class="hint">'+totalVeh+' registrado(s) en total</span></div>'+
-    '<div class="card" style="padding:14px 20px; margin-bottom:22px;">'+
+    '<div class="card" style="padding:10px 16px; margin-bottom:14px;">'+
       tipoBarsHTML(porTipo) +
     '</div>'+
 
     (alertas.length ? (
       '<div class="section-head"><h2>Alertas activas</h2><span class="hint">se avisa con sonido mientras esta pestaña esté abierta</span></div>'+
-      '<div class="card" style="padding:6px 0; margin-bottom:22px;"><div class="tablewrap" style="border:0;"><table><thead><tr><th>Folio</th><th>Tipo</th><th>Propietario</th><th>Ingresó</th><th>Estado</th><th>Motivo</th><th></th></tr></thead><tbody>'+
+      '<div class="card" style="padding:4px 0; margin-bottom:14px;"><div class="tablewrap" style="border:0;"><table><thead><tr><th>Folio</th><th>Tipo</th><th>Propietario</th><th>Ingresó</th><th>Estado</th><th>Motivo</th><th></th></tr></thead><tbody>'+
       alertas.map(function(v){
         var p = propietarioById(v.propietarioId);
         var abierto = movimientoAbierto(v.id);
@@ -1239,7 +1239,7 @@ function renderDashboard(){
 
     (anticipadasHoy.length ? (
       '<div class="section-head"><h2>Salidas anticipadas hoy</h2><span class="hint">salieron antes del fin de su turno</span></div>'+
-      '<div class="card" style="padding:6px 0; margin-bottom:22px;"><div class="tablewrap" style="border:0;"><table><thead><tr><th>Propietario</th><th>Folio</th><th>Turno</th><th>Salió</th><th>Horas antes</th></tr></thead><tbody>'+
+      '<div class="card" style="padding:4px 0; margin-bottom:14px;"><div class="tablewrap" style="border:0;"><table><thead><tr><th>Propietario</th><th>Folio</th><th>Turno</th><th>Salió</th><th>Horas antes</th></tr></thead><tbody>'+
       anticipadasHoy.map(function(m){
         var v = vehiculoById(m.vehiculoId); var p = v ? propietarioById(v.propietarioId) : null;
         var turno = v ? turnoDeVehiculo(v) : null;
@@ -1248,17 +1248,17 @@ function renderDashboard(){
     ) : '')+
 
     '<div class="section-head"><h2>Consulta rápida</h2><span class="hint">busca por folio, nombre o documento</span></div>'+
-    '<div class="card" style="padding:16px 18px; margin-bottom:22px;">'+
-      '<input type="search" class="search" id="lookupQuery" placeholder="Folio (VEH-2026-0001), nombre del propietario o documento…" style="margin-bottom:14px;" />'+
+    '<div class="card" style="padding:12px 14px; margin-bottom:14px;">'+
+      '<input type="search" class="search" id="lookupQuery" placeholder="Folio (VEH-2026-0001), nombre del propietario o documento…" style="margin-bottom:10px;" />'+
       '<div id="lookupResult"></div>'+
     '</div>'+
 
     '<div class="section-head"><h2>Uso del mes por persona</h2><span class="hint">para el programa de compensación por uso frecuente</span></div>'+
     (rankingMes.length ? (
-      '<div class="card" style="padding:16px 18px; margin-bottom:22px;"><div class="chip-list">'+
+      '<div class="card" style="padding:12px 14px; margin-bottom:14px;"><div class="chip-list">'+
         rankingMes.map(function(x,i){ return '<div class="chip"><b>'+(i+1)+'. '+x.count+'</b>'+esc(x.p.nombre)+'</div>'; }).join('') +
       '</div></div>'
-    ) : '<div class="card" style="padding:16px 18px; margin-bottom:22px;"><div class="foot" style="color:var(--text-muted); font-size:12.5px;">Sin ingresos registrados este mes todavía.</div></div>');
+    ) : '<div class="card" style="padding:12px 14px; margin-bottom:14px;"><div class="foot" style="color:var(--text-muted); font-size:12.5px;">Sin ingresos registrados este mes todavía.</div></div>');
 
   document.querySelectorAll('[data-salida]').forEach(function(btn){
     btn.addEventListener('click', function(){ registrarSalida(btn.dataset.salida); rerender(); });
