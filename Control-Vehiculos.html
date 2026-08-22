@@ -1157,15 +1157,11 @@ function picosAsistenciaPorDia(filterField, filterKey){
   });
 }
 function picosBarsHTML(picos){
-  var max = picos.reduce(function(m,x){ return Math.max(m,x.avg); }, 1);
-  return picos.map(function(x){
-    var pct = Math.round((x.avg/max)*100);
-    return '<div class="typebar-row">'+
-      '<div class="typebar-label">'+x.name+'</div>'+
-      '<div class="typebar-track"><div class="typebar-fill" style="width:'+pct+'%;"></div></div>'+
-      '<div class="typebar-count">'+x.avg+'</div>'+
-    '</div>';
-  }).join('');
+  var max = Math.max(1, picos.reduce(function(m,x){ return Math.max(m,x.avg); }, 0));
+  return '<div class="bars">'+ picos.map(function(x){
+    var h = Math.round((x.avg/max)*80)+2;
+    return '<div class="col"><div class="cnt'+(x.avg?'':' zero')+'">'+x.avg+'</div><div class="b" style="height:'+h+'px" title="'+x.avg+' vehículo(s) en promedio los '+x.name+'"></div><div class="lbl">'+x.name+'</div></div>';
+  }).join('') +'</div>';
 }
 function photoBox(src, placeholder){
   return '<div class="photo-box">'+(src ? '<img src="'+src+'" />' : '<div class="ph">'+esc(placeholder)+'</div>')+'</div>';
