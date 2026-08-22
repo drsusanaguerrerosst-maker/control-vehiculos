@@ -1129,6 +1129,39 @@ function tipoBarsHTML(porTipo){
     '</div>';
   }).join('');
 }
+/* Promedio de vehículos presentes por día de la semana, calculado a partir de los ingresos/salidas
+   reales de las últimas semanas (no de reglas fijas de turno), para detectar picos de ocupación. */
+var PICOS_SEMANAS = 8;
+var PICOS_DIAS_NOMBRE = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+function picosAsistenciaPorDia(){
+  var lookbackDias = PICOS_SEMANAS*7;
+  var sum = [0,0,0,0,0,0,0], cuenta = [0,0,0,0,0,0,0];
+  for(var i=0;i<lookbackDias;i++){
+    var d = new Date(Date.now() - i*86400000);
+    var iso = d.toISOString().slice(0,10);
+    var presentes = state.movimientos.filter(function(m){
+      return m.fechaIngreso<=iso && (!m.fechaSalida || m.fechaSalida>=iso);
+    }).length;
+    var dow = d.getDay();
+    sum[dow] += presentes; cuenta[dow]++;
+  }
+  var orden = [1,2,3,4,5,6,0]; // lunes..domingo
+  return orden.map(function(dow){
+    var avg = cuenta[dow] ? sum[dow]/cuenta[dow] : 0;
+    return { key:String(dow), name:PICOS_DIAS_NOMBRE[dow], avg: Math.round(avg*10)/10 };
+  });
+}
+function picosBarsHTML(picos){
+  var max = picos.reduce(function(m,x){ return Math.max(m,x.avg); }, 1);
+  return picos.map(function(x){
+    var pct = Math.round((x.avg/max)*100);
+    return '<div class="typebar-row">'+
+      '<div class="typebar-label">'+x.name+'</div>'+
+      '<div class="typebar-track"><div class="typebar-fill" style="width:'+pct+'%;"></div></div>'+
+      '<div class="typebar-count">'+x.avg+'</div>'+
+    '</div>';
+  }).join('');
+}
 function photoBox(src, placeholder){
   return '<div class="photo-box">'+(src ? '<img src="'+src+'" />' : '<div class="ph">'+esc(placeholder)+'</div>')+'</div>';
 }
@@ -1274,6 +1307,8 @@ function renderDashboard(){
   var rankingMes = Object.keys(usoMes).map(function(pid){ return {p: propietarioById(pid), count: usoMes[pid]}; })
     .filter(function(x){ return x.p; }).sort(function(a,b){ return b.count-a.count; }).slice(0,5);
 
+  var picos = picosAsistenciaPorDia();
+
   var quinceISO = new Date(Date.now() - 15*86400000).toISOString().slice(0,10);
   var movs15 = state.movimientos.filter(function(m){ return m.fechaIngreso >= quinceISO; });
   var tiposFrecuentes = freqListTipo(movs15);
@@ -1294,9 +1329,10 @@ function renderDashboard(){
       kpiCard('Salidas anticipadas hoy', anticipadasHoy.length, '') +
     '</div>'+
 
-    '<div class="section-head"><h2>Vehículos por tipo</h2><span class="hint">'+totalVeh+' registrado(s) en total</span></div>'+
+    '<div class="section-head"><h2>Picos de asistencia por día de la semana</h2><span class="hint">promedio de vehículos presentes · últimas '+PICOS_SEMANAS+' semanas</span></div>'+
     '<div class="card" style="padding:10px 16px; margin-bottom:14px;">'+
-      tipoBarsHTML(porTipo) +
+      picosBarsHTML(picos) +
+      '<div class="foot" style="color:var(--text-muted); font-size:11px; margin-top:8px; padding-top:8px; border-top:1px solid var(--accent-bg);">Útil para anticipar cuándo el parqueadero puede desbordarse: se calcula de los ingresos y salidas reales registrados, no de un horario fijo asumido.</div>'+
     '</div>'+
 
     '<div class="section-head"><h2>Tipos de vehículo y departamentos frecuentes</h2><span class="hint">mayor asistencia · últimos 15 días</span></div>'+
@@ -1342,7 +1378,12 @@ function renderDashboard(){
       '<div class="card" style="padding:12px 14px; margin-bottom:14px;"><div class="chip-list">'+
         rankingMes.map(function(x,i){ return '<div class="chip"><b>'+(i+1)+'. '+x.count+'</b>'+esc(x.p.nombre)+'</div>'; }).join('') +
       '</div></div>'
-    ) : '<div class="card" style="padding:12px 14px; margin-bottom:14px;"><div class="foot" style="color:var(--text-muted); font-size:12.5px;">Sin ingresos registrados este mes todavía.</div></div>');
+    ) : '<div class="card" style="padding:12px 14px; margin-bottom:14px;"><div class="foot" style="color:var(--text-muted); font-size:12.5px;">Sin ingresos registrados este mes todavía.</div></div>')+
+
+    '<div class="section-head"><h2>Cantidad de vehículos</h2><span class="hint">'+totalVeh+' registrado(s) en total</span></div>'+
+    '<div class="card" style="padding:10px 16px;">'+
+      tipoBarsHTML(porTipo) +
+    '</div>';
 
   document.querySelectorAll('[data-salida]').forEach(function(btn){
     btn.addEventListener('click', function(){ registrarSalida(btn.dataset.salida); rerender(); });
